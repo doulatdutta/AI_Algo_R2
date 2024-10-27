@@ -1,13 +1,13 @@
 #description of full project
 
-write full code for algo_agent.py, data_download.py, backtesting_agent.py, manager_agent.py, checker_agent.py and config.yaml.
+
 
 
 Here is a basic outline of how you might structure your code. Please note that this is a simplified version and may need to be adjusted based on your specific requirements and constraints.
 
-Step-1:- 'Manager_agent' will ask for company name, and then asign job to algo agent. 
+Step-1:- 'manager_agent' will ask for company name, and then asign job to algo agent. 
 
-Step-2:-'algo agent' will get the company name from manager agent and generate one algoritham (buy and sell condition) with help of ollama, and save it in output/logs folder as {company_name_algoritham-1}.txt
+Step-2:-'algo agent' will get the company name from manager agent and generate one algoritham (buy and sell condition) with help of ollama, and save it in output/algo folder as {company_name_algoritham-1}.txt
 only use technical indicator which are sutable with ta-lib and pandas-ta library.
 
          - Moving Averages: SMA, EMA, WMA, VWAP
@@ -27,13 +27,17 @@ only use technical indicator which are sutable with ta-lib and pandas-ta library
         MACD signal < MACD histogram (bearish momentum).
 
 
-Step-3:-Then manager agent will ask 'data_download_agent' to download pervious 30 days data everyminuite using ytfinance and save it in agents/backetsting_agent/historical_data folder as {company_name}.csv
+Step-3:-Then manager agent will ask 'data_download' to download pervious 30 days data everyminuite using ytfinance and save it in agents/backetsting_agent/historical_data folder as {company_name}.csv
         Also, data_download_agent will check everyday if it has already downloaded the 30 days data for that day and for that companyor not, if it has already downloaded then it will skip that day and continue with next day.
 
-Step-4:-After'data_download_agent' completed its work 'manager_agent' will asign the generated algoritham (buy and sell condition) to 'backtesting_agent'.
+        Format will be as follows:-
+        Date,Open,High,Low,Close,Adj Close,Volume
 
-Step-5:-The 'Backtesting_agent' will backtest the algoritham(inside output\logs\company_name_algorithm-1_date_time.txt) with the historical data (inside agents\backtesting_agent\historical_data\ folder as .csv file) downloaded by 'data_download_agent' and save the result in output\logs folder as (company_name_algoritham-1_result).txt and also save the graph of backtested data in output\graphs folder as (company_name_algoritham-1_graph).png. 
-        'Backtesting_agent' will backtest realtime trading as per the generated algoritham, it will calculate total number of trade for eatch day, calculate total profit or loss (in % for 10 nos stock) for each day and save it in output/logs folder as (company_name_algoritham-1_result).txt.
+Step-4:-After'data_download' completed its work 'manager_agent' will asign the generated algoritham (buy and sell condition) to 'backtesting_agent'.
+
+Step-5:-The 'Backtesting_agent' will backtest the algoritham(inside output\algo\company_name_algorithm-1_date_time.txt) with the historical data (inside agents\backtesting_agent\historical_data\ folder as .csv file) downloaded by 'data_download' 
+        and save the result in output\backtest_results folder as (company_name_algoritham-1_result).txt and also save the graph of backtested data in output\backtest_results folder as (company_name_algoritham-1_performance).png. 
+        'Backtesting_agent' will backtest realtime trading as per the generated algoritham, it will calculate total number of trade for eatch day, calculate total profit or loss (in % for 1000000 cash and 0.02% brockarage charges) for each day and save it.
         It will calculate total trade from two type of trade "buy_trade" or "sell trade"
         it will consider one "buy_trade" as buy stock as per the buy condition mentioned in (company_name_algoritham-1).txt and sell stock as per the sell condition mentioned in (company_name_algoritham-1).txt 
         and it will consider one "sell_trade" as sell stock as per the sell condition mentioned in (company_name_algoritham-1).txt and buy condition mentioned in (company_name_algoritham-1).txt. 
@@ -105,7 +109,7 @@ Step-5:-The 'Backtesting_agent' will backtest the algoritham(inside output\logs\
 
 
 
-Step-6:- then 'manager_agent' will ask 'checker_agent' to check the result saved in log folder as {company_name_algoritham-1_result}.txt 
+Step-6:- then 'manager_agent' will ask 'checker_agent' to check the result saved in output/backtest_results folder as {company_name_algoritham-1_result}.txt 
     and if the result is meeting the % mentioned in config.yaml then it will return to manager agent as 'good' else it will return as 'not good'.
     if the number of checking is equal to the number mentioned in config.yaml, it will reduce the % mentioned by 5% everytime. (As like 1st time it will check with 70% if it is not good then it will check with 65% and so on.)
     Final data will be saved in log file as (companyname_checking-1.txt) 
@@ -123,6 +127,7 @@ Step-7:- if 'checker_agent' return 'good' then 'manager_agent' will stop the pro
     
 
 Step-8:- if 'checker_agent' return 'not good', 'manager_agent' will ask 'automated_feedback' to provide feedback to ollama model to finetune the model to generate better algoritham.
+        and the feedback will be saved in output/feedback folder as {company_name_feedback-1}.txt
 
     formatting of ollama feedback will be like:-
 

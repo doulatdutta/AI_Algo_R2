@@ -5,9 +5,9 @@ algo_agent:
 ollama_model:
   model: "llama3.2"  # Define the model name for Ollama
 
-historical_days: 30
-data_interval: "1m"
-premarket_data: false
+# historical_days: 30
+# data_interval: "1m"
+# premarket_data: false
 
 
 
