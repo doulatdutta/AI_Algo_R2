@@ -44,58 +44,104 @@ Sell Conditions:
 
 Daily Results:
 	2024-10-25 Profit: -2.52% ; total trade: 355 ; buy_trade - 15 ; sell_trade - 0
+ 
 	2024-10-24 Profit: -23.92% ; total trade: 220 ; buy_trade - 152 ; sell_trade - 0
+ 
 	2024-10-23 Profit: -22.55% ; total trade: 187 ; buy_trade - 189 ; sell_trade - 0
+ 
 	2024-10-22 Profit: -20.18% ; total trade: 188 ; buy_trade - 188 ; sell_trade - 0
+ 
 	2024-10-21 Profit: -26.39% ; total trade: 186 ; buy_trade - 188 ; sell_trade - 0
+ 
 	2024-10-18 Profit: -25.28% ; total trade: 187 ; buy_trade - 188 ; sell_trade - 0
+ 
 	2024-10-17 Profit: -28.34% ; total trade: 187 ; buy_trade - 188 ; sell_trade - 0
+ 
 	2024-10-16 Profit: -28.47% ; total trade: 188 ; buy_trade - 188 ; sell_trade - 0
+ 
 	2024-10-15 Profit: -30.26% ; total trade: 187 ; buy_trade - 189 ; sell_trade - 0
+ 
 	2024-10-14 Profit: -30.88% ; total trade: 188 ; buy_trade - 188 ; sell_trade - 0
+ 
 	2024-10-11 Profit: -29.56% ; total trade: 187 ; buy_trade - 188 ; sell_trade - 0
+ 
 	2024-10-10 Profit: -30.72% ; total trade: 186 ; buy_trade - 188 ; sell_trade - 0
+ 
 	2024-10-09 Profit: -32.18% ; total trade: 188 ; buy_trade - 188 ; sell_trade - 0
+ 
 	2024-10-08 Profit: -30.83% ; total trade: 186 ; buy_trade - 188 ; sell_trade - 0
+ 
 	2024-10-07 Profit: -30.83% ; total trade: 186 ; buy_trade - 187 ; sell_trade - 0
+ 
 	2024-10-04 Profit: -31.56% ; total trade: 186 ; buy_trade - 187 ; sell_trade - 0
+ 
 	2024-10-03 Profit: -32.00% ; total trade: 188 ; buy_trade - 188 ; sell_trade - 0
+ 
 	2024-10-01 Profit: -30.17% ; total trade: 187 ; buy_trade - 189 ; sell_trade - 0
+ 
 	2024-09-30 Profit: -31.28% ; total trade: 187 ; buy_trade - 188 ; sell_trade - 0
+ 
 	2024-09-27 Profit: -31.38% ; total trade: 187 ; buy_trade - 187 ; sell_trade - 0
-
+ 
 Overall Statistics:
+
 Start: 2024-09-27 09:15:00+05:30
+
 End: 2024-10-25 15:29:00+05:30
+
 Duration: 28 days 06:14:00
+
 Exposure Time [%]: 94.53
+
 Equity Final [$]: 145.08
+
 Equity Peak [$]: 100000.00
+
 Return [%]: -99.85
+
 Buy & Hold Return [%]: -12.88
+
 Return (Ann.) [%]: -100.00
+
 Volatility (Ann.) [%]: 0.00
+
 Sharpe Ratio: 0.00
+
 Sortino Ratio: 0.00
+
 Calmar Ratio: 0.00
+
 Max. Drawdown [%]: -99.86
+
 Avg. Drawdown [%]: -99.86
+
 Max. Drawdown Duration: 28 days 06:13:00
+
 Avg. Drawdown Duration: 28 days 06:13:00
-# Trades: 3533
+
+#Trades: 3533
+
 Win Rate [%]: 1.92
+
 Best Trade [%]: 0.77
+
 Worst Trade [%]: -2.86
+
 Avg. Trade [%]: -0.20
+
 Max. Trade Duration: 2 days 17:46:00
+
 Avg. Trade Duration: 0 days 00:05:00
+
 Profit Factor: 0.01
+
 Expectancy [%]: -0.20
+
 SQN: -32.07
 
-# End Code Block 
+#
 
-``` ```
+
 
 
 ## Project Structure
