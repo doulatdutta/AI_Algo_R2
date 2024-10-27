@@ -1,0 +1,13 @@
+Buy Conditions:
+**
+rsi(14) < 30
+sma(20) > sma(50)
+vwap > sma(10)
+obv > 0
+
+Sell Conditions:
+**
+rsi(14) > 70
+sma(20) < sma(50)
+macd >= 0
+cci(14) <= -200

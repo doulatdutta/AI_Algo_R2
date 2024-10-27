@@ -1,0 +1,37 @@
+# pip install -r requirements.txt
+
+ollama          # For running the Ollama model
+pyyaml          # For parsing YAML files, possibly for configuration files
+numpy           # For numerical operations
+pandas          # For handling stock data
+yfinance        # For fetching stock data from Yahoo Finance
+matplotlib      # For plotting backtesting results
+pip             # For installing Python packages
+pandas_ta       # For technical analysis on stock data
+scipy           # For scientific computations, possibly for statistical analysis
+talib-binary
+pandas-ta
+setuptools
+
+#  ollama pull llama3.2
+
+
+
+
+
+
+
+# Additional libraries that might be needed based on your specific use case:
+# pdfminer.six             # For reading and parsing PDF files
+# PyPDF2               # For additional PDF reading functionalities
+# scikit-learn         # For machine learning and data analysis
+# tensorflow           # For any machine learning requirements, possibly to fine-tune the Ollama model
+# torch               # PyTorch for deep learning, needed for working with the Ollama model
+# transformers        # Hugging Face Transformers, for managing the Ollama model
+# requests           # For making HTTP requests (e.g., fetching stock data from APIs)
+# python-dotenv       # For loading environment variables from .env
+# loguru               # For logging functionalities
+# finviz               # For additional financial data scraping (optional)
+# beautifulsoup4       # For web scraping (optional, if you want to scrape stock data from websites)
+# schedule             # For running scheduled tasks in Python (optional, for task scheduling)
+

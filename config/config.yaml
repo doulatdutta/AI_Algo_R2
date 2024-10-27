@@ -1,0 +1,35 @@
+# config.yaml
+algo_agent:
+  number_of_algorithms: 5  # Default value, can be adjusted
+  
+ollama_model:
+  model: "llama3.2"  # Define the model name for Ollama
+
+historical_days: 30
+data_interval: "1m"
+premarket_data: false
+
+
+
+backtesting:
+  stocks_per_trade: 10  # Number of stocks to trade
+  historical_data_path: "agents/backtesting_agent/historical_data/"
+  algorithm_path: "output/logs/"
+  output_path: "output/"
+  lookback_days: 30  # Number of days to backtest
+
+
+configuration:
+  Return [%]: 30.00   # Minimum average profit percentage required
+  max_drawdown: 20    # Maximum drawdown percentage allowed
+  number of checking: 10 # after 10 times checking the profit percentage reduce.
+  reduce %: 5 
+
+# Data download configuration
+
+historical_days: 30            # Number of days to download
+chunk_size: 7                  # Size of each download chunk in days
+data_interval: "1m"            # Interval for each data point
+max_attempts: 6                # Max attempts for retrying failed downloads
+delay_between_attempts: 10     # Delay in seconds between download attempts
+delay_between_chunks: 60       # Delay in seconds between chunk downloads

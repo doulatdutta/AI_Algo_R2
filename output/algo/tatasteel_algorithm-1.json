@@ -1,0 +1,41 @@
+{
+  "buy_conditions": [
+    {
+      "raw_condition": "RSI(14) < 30"
+    },
+    {
+      "raw_condition": "MACD(12, 26) > Signal Line(9)"
+    },
+    {
+      "raw_condition": "Stochastic Oscillator(14, 3, 3) < 20"
+    },
+    {
+      "raw_condition": "Bollinger Bands(20, 2) - Lower Band > 0"
+    },
+    {
+      "raw_condition": "Volume > 2 * Average Volume(20)"
+    }
+  ],
+  "sell_conditions": [
+    {
+      "raw_condition": "RSI(14) > 70"
+    },
+    {
+      "raw_condition": "MACD(12, 26) < Signal Line(9)"
+    },
+    {
+      "raw_condition": "Stochastic Oscillator(14, 3, 3) > 80"
+    },
+    {
+      "raw_condition": "Bollinger Bands(20, 2) - Upper Band < 0"
+    },
+    {
+      "raw_condition": "Volume < 0.5 * Average Volume(20)"
+    }
+  ],
+  "metadata": {
+    "company": "TATAMOTORS",
+    "generated_at": "2024-10-28T07:38:22",
+    "model": "llama3.2"
+  }
+}

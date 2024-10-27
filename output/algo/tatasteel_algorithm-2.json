@@ -1,0 +1,41 @@
+{
+    "buy_conditions": [
+        {
+            "raw_condition": "**"
+        },
+        {
+            "raw_condition": "rsi(14) < 30"
+        },
+        {
+            "raw_condition": "sma(20) > sma(50)"
+        },
+        {
+            "raw_condition": "vwap > sma(10)"
+        },
+        {
+            "raw_condition": "obv > 0"
+        }
+    ],
+    "sell_conditions": [
+        {
+            "raw_condition": "**"
+        },
+        {
+            "raw_condition": "rsi(14) > 70"
+        },
+        {
+            "raw_condition": "sma(20) < sma(50)"
+        },
+        {
+            "raw_condition": "macd >= 0"
+        },
+        {
+            "raw_condition": "cci(14) <= -200"
+        }
+    ],
+    "metadata": {
+        "company": "tatasteel",
+        "generated_at": "2024-10-28T00:57:21.684467",
+        "model": "llama3.2"
+    }
+}
