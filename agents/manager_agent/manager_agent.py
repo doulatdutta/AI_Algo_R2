@@ -11,6 +11,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich import print as rprint
 import json
 
+
 # Import agents
 from agents.algo_agent.algo_agent import AlgoAgent
 from agents.backtesting_agent.backtesting_agent import BacktestingAgent
