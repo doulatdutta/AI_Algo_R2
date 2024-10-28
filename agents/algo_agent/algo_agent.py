@@ -158,6 +158,6 @@ class AlgoAgent:
 
 
 
-if __name__ == "__main__":
-    algo_agent = AlgoAgent("tatasteel", 1)
-    algo_agent.generate_algorithms()
+# if __name__ == "__main__":
+#     algo_agent = AlgoAgent("ZOMATO", 1)
+#     algo_agent.generate_algorithms()

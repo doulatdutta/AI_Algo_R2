@@ -1,0 +1,9 @@
+{
+    "buy_conditions": [],
+    "sell_conditions": [],
+    "metadata": {
+        "company": "ZOMATO",
+        "generated_at": "2024-10-28T22:52:36.825957",
+        "model": "llama3.2"
+    }
+}

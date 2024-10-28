@@ -1,0 +1,41 @@
+{
+    "buy_conditions": [
+        {
+            "raw_condition": "**"
+        },
+        {
+            "raw_condition": "sma(20) > sma(50)"
+        },
+        {
+            "raw_condition": "rsi(14) < 30"
+        },
+        {
+            "raw_condition": "ema(20) > ema(50)"
+        },
+        {
+            "raw_condition": "atr(15) > vwap(15)"
+        }
+    ],
+    "sell_conditions": [
+        {
+            "raw_condition": "**"
+        },
+        {
+            "raw_condition": "macd(12, 26) > macd(12, 26)[-1]"
+        },
+        {
+            "raw_condition": "sma(20) < sma(50)"
+        },
+        {
+            "raw_condition": "bollinger bands(20, 2, 2) < lower band"
+        },
+        {
+            "raw_condition": "cci(14) < -100"
+        }
+    ],
+    "metadata": {
+        "company": "ZOMATO",
+        "generated_at": "2024-10-28T22:53:16.183199",
+        "model": "llama3.2"
+    }
+}

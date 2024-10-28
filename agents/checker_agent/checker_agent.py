@@ -93,20 +93,22 @@ class CheckerAgent:
         
         return final_result
 
-def main():
-    """Main function to run the checker agent."""
-    try:
-        logger.info("Starting checker agent")
-        checker_agent = CheckerAgent()
-        
-        company_name = "TATASTEEL"  # Replace with actual company name as needed
-        
-        final_status = checker_agent.check_results(company_name, algo_num=1)
-        logger.info(f"Checker agent status: {final_status}")
+# #Example usage
 
-    except Exception as e:
-        logger.error(f"Main execution failed: {str(e)}")
-        raise
+# def main():
+#     """Main function to run the checker agent."""
+#     try:
+#         logger.info("Starting checker agent")
+#         checker_agent = CheckerAgent()
+        
+#         company_name = "ZOMATO"  # Replace with actual company name as needed
+        
+#         final_status = checker_agent.check_results(company_name, algo_num=1)
+#         logger.info(f"Checker agent status: {final_status}")
 
-if __name__ == "__main__":
-    main()
+#     except Exception as e:
+#         logger.error(f"Main execution failed: {str(e)}")
+#         raise
+
+# if __name__ == "__main__":
+#     main()

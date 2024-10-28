@@ -172,5 +172,5 @@ if __name__ == "__main__":
         else:
             print("Error processing feedback")
     
-    # Example usage:
-    process_algo_feedback('TATASTEEL', 1)
+    ### Example usage:
+    # process_algo_feedback('ZOMATO', 1)

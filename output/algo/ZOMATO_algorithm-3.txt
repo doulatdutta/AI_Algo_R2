@@ -1,0 +1,13 @@
+Buy Conditions:
+**
+sma(20) > sma(50)
+rsi(14) < 30
+ema(20) > ema(50)
+atr(15) > vwap(15)
+
+Sell Conditions:
+**
+macd(12, 26) > macd(12, 26)[-1]
+sma(20) < sma(50)
+bollinger bands(20, 2, 2) < lower band
+cci(14) < -100

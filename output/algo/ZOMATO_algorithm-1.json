@@ -1,0 +1,41 @@
+{
+    "buy_conditions": [
+        {
+            "raw_condition": "rsi(14) < 30"
+        },
+        {
+            "raw_condition": "sma(20) > sma(50)"
+        },
+        {
+            "raw_condition": "ema(20) < ema(50)"
+        },
+        {
+            "raw_condition": "keltner channels(20, 2.0) > upper keltner"
+        },
+        {
+            "raw_condition": "vwap(5) > vwap(10)"
+        }
+    ],
+    "sell_conditions": [
+        {
+            "raw_condition": "rsi(14) > 70"
+        },
+        {
+            "raw_condition": "sma(20) < sma(50)"
+        },
+        {
+            "raw_condition": "macd(12, 26) < crossover signal"
+        },
+        {
+            "raw_condition": "bollinger bands(20, 2.0) > upper bollinger band"
+        },
+        {
+            "raw_condition": "ccl(15) <= -200"
+        }
+    ],
+    "metadata": {
+        "company": "ZOMATO",
+        "generated_at": "2024-10-28T22:34:50.539396",
+        "model": "llama3.2"
+    }
+}

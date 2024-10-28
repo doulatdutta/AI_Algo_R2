@@ -3,11 +3,11 @@ import pandas as pd
 import numpy as np
 import yaml
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import pytz
 import talib
 import logging
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import time
 
 class HistoricalDataDownloader:
@@ -53,9 +53,31 @@ class HistoricalDataDownloader:
                 
         except Exception as e:
             self.logger.error(f"Error loading config: {e}")
-            raise e  # Raise error to ensure issues are addressed in config.yaml
+            raise
 
-
+    def check_existing_data(self, company_name: str) -> Tuple[bool, Optional[pd.DataFrame], Optional[datetime]]:
+        """
+        Check if data file exists and return its contents and last date
+        Returns: (exists, dataframe, last_date)
+        """
+        output_path = os.path.join('agents', 'backtesting_agent', 'historical_data')
+        file_path = os.path.join(output_path, f"{company_name}_minute.csv")
+        
+        if os.path.exists(file_path):
+            try:
+                df = pd.read_csv(file_path)
+                if not df.empty:
+                    # Convert datetime column
+                    df['Datetime'] = pd.to_datetime(df['Datetime'])
+                    last_date = df['Datetime'].max()
+                    
+                    self.logger.info(f"Found existing data for {company_name} up to {last_date}")
+                    return True, df, last_date
+                    
+            except Exception as e:
+                self.logger.error(f"Error reading existing file: {e}")
+                
+        return False, None, None
 
     def is_market_holiday(self, date) -> bool:
         """Check if a given date is a market holiday"""
@@ -71,7 +93,7 @@ class HistoricalDataDownloader:
         elif isinstance(date, pd.Timestamp):
             date = date.date()
             
-        if date.weekday() >= 5:
+        if date.weekday() >= 5:  # Weekend
             return True
             
         return date.strftime("%Y-%m-%d") in holidays
@@ -104,21 +126,64 @@ class HistoricalDataDownloader:
                     
         return pd.DataFrame()
 
-    def download_historical_data(self, company_name: str) -> Optional[str]:
-        """Download historical minute data in chunks"""
+    def merge_and_save_data(self, old_data: Optional[pd.DataFrame], new_data: pd.DataFrame, 
+                           company_name: str) -> pd.DataFrame:
+        """Merge old and new data, remove duplicates, and save"""
+        try:
+            if old_data is not None and not old_data.empty:
+                # Combine old and new data
+                combined_data = pd.concat([old_data, new_data])
+                
+                # Convert datetime to consistent format
+                combined_data['Datetime'] = pd.to_datetime(combined_data['Datetime'])
+                
+                # Remove duplicates based on Datetime
+                combined_data = combined_data.drop_duplicates(subset=['Datetime'], keep='last')
+                
+                # Sort by datetime
+                combined_data = combined_data.sort_values('Datetime')
+            else:
+                combined_data = new_data
+            
+            # Process the combined data
+            processed_data = self.process_data(combined_data)
+            
+            # Save the data
+            self.save_data(processed_data, company_name)
+            
+            return processed_data
+            
+        except Exception as e:
+            self.logger.error(f"Error merging data: {e}")
+            raise
+
+    def download_historical_data(self, company_name: str) -> bool:
+        """Download historical minute data with smart checking and incremental updates"""
         try:
             symbol = self.get_stock_symbol(company_name)
             total_days = self.config.get('historical_days', 28)
             chunk_size = self.config.get('chunk_size', 7)
             chunk_delay = self.config.get('delay_between_chunks', 60)
             
+            # Check existing data
+            has_existing, existing_data, last_date = self.check_existing_data(company_name)
+            
             end_date = datetime.now(self.ist_tz).date()
             start_date = end_date - timedelta(days=total_days)
             
-            self.logger.info(f"Downloading {total_days} days of minute data for {symbol}")
+            if has_existing and last_date:
+                # Adjust start date to download only missing data
+                start_date = last_date.date() + timedelta(days=1)
+                self.logger.info(f"Downloading incremental data from {start_date} to {end_date}")
+            else:
+                self.logger.info(f"Downloading full {total_days} days of data for {symbol}")
+            
+            if start_date >= end_date:
+                self.logger.info("Data is already up to date")
+                return True
             
             ticker = yf.Ticker(symbol)
-            all_data = []
+            new_data = []
             
             # Download data in chunks
             current_chunk_end = end_date
@@ -148,7 +213,7 @@ class HistoricalDataDownloader:
                     current_date += timedelta(days=1)
                 
                 if chunk_data:
-                    all_data.extend(chunk_data)
+                    new_data.extend(chunk_data)
                     chunks_downloaded += 1
                     
                     # Add delay between chunks
@@ -158,21 +223,25 @@ class HistoricalDataDownloader:
                 
                 current_chunk_end = current_chunk_start - timedelta(days=1)
             
-            if not all_data:
-                self.logger.error(f"No data downloaded for {symbol}")
-                return None
-                
-            # Combine all data
-            combined_data = pd.concat(all_data)
-            processed_data = self.process_data(combined_data)
+            if not new_data:
+                if has_existing:
+                    self.logger.info("No new data to download")
+                    return True
+                else:
+                    self.logger.error(f"No data downloaded for {symbol}")
+                    return False
             
-            # Save the data
-            output_file = self.save_data(processed_data, company_name)
-            return output_file
+            # Combine all new data
+            combined_new_data = pd.concat(new_data)
+            
+            # Merge with existing data and save
+            self.merge_and_save_data(existing_data, combined_new_data, company_name)
+            
+            return True
             
         except Exception as e:
-            self.logger.error(f"Error downloading data for {company_name}: {str(e)}")
-            return None
+            self.logger.error(f"Error downloading data for {company_name}: {e}")
+            return False
 
     def process_data(self, data: pd.DataFrame) -> pd.DataFrame:
         """Process and clean the minute data"""
@@ -237,18 +306,19 @@ class HistoricalDataDownloader:
         
         return output_file
 
-    def download_for_companies(self, company_list: List[str]):
-        """Download historical data for multiple companies"""
-        self.logger.info(f"Starting minute data download for: {company_list}")
-        
-        for company in company_list:
-            try:
-                self.download_historical_data(company)
-            except Exception as e:
-                self.logger.error(f"Error downloading data for {company}: {str(e)}")
 
-if __name__ == "__main__":
-    # Example usage
-    downloader = HistoricalDataDownloader()
-    stocks = ["YESBANK"]  # Start with one stock for testing
-    downloader.download_for_companies(stocks)
+# ### Example usage
+# def main():
+#     """Example usage"""
+#     downloader = HistoricalDataDownloader()
+#     stocks = ["ZOMATO"]  # Start with one stock for testing
+    
+#     for stock in stocks:
+#         success = downloader.download_historical_data(stock)
+#         if success:
+#             print(f"Successfully downloaded/updated data for {stock}")
+#         else:
+#             print(f"Failed to download/update data for {stock}")
+
+# if __name__ == "__main__":
+#     main()

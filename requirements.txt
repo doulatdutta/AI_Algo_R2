@@ -12,6 +12,9 @@ scipy           # For scientific computations, possibly for statistical analysis
 talib-binary
 pandas-ta
 setuptools
+rich
+questionary
+llama-cpp-python
 
 #  ollama pull llama3.2
 

@@ -1,11 +1,12 @@
 Algorithm -
 Buy Conditions:
-- **; - rsi(14) < 30; - sma(20) > sma(50); - macd(12, 26) > macd(12, 26)_lag1; - stochastic oscillator(14, 3, 3) < 20
+- **; - sma(20) > sma(50); - rsi(14) < 30; - ema(20) > ema(50); - atr(15) > vwap(15)
 
 Sell Conditions:
-- **; - rsi(14) > 70; - sma(20) < sma(50); - macd(12, 26) < macd(12, 26)_lag1; - williams %r(9) > -80
+- **; - macd(12, 26) > macd(12, 26)[-1]; - sma(20) < sma(50); - bollinger bands(20, 2, 2) < lower band; - cci(14) < -100
 
 Daily Results:
+	2024-10-28 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
 	2024-10-25 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
 	2024-10-24 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
 	2024-10-23 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
@@ -25,18 +26,17 @@ Daily Results:
 	2024-10-03 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
 	2024-10-01 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
 	2024-09-30 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
-	2024-09-27 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
 
 Overall Statistics:
-Start: 2024-09-27 09:15:00+05:30
-End: 2024-10-25 15:29:00+05:30
+Start: 2024-09-30 09:15:00+05:30
+End: 2024-10-28 15:29:00+05:30
 Duration: 28 days 06:14:00
 Exposure Time [%]: 0.00
 Equity Final [$]: 100000.00
 Equity Peak [$]: 100000.00
-Return [%]: 40.00
-Buy & Hold Return [%]: -12.88
-Return (Ann.) [%]: 40.00
+Return [%]: 0.00
+Buy & Hold Return [%]: -7.61
+Return (Ann.) [%]: 0.00
 Volatility (Ann.) [%]: 0.00
 Sharpe Ratio: nan
 Sortino Ratio: nan

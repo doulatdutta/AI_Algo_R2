@@ -220,10 +220,10 @@ class DynamicStrategy(Strategy):
     def initialize_indicator(self, indicator_name, params):
         """Initialize a specific technical indicator."""
         try:
-            close = self.data.Close
-            high = self.data.High
-            low = self.data.Low
-            volume = self.data.Volume
+            close = self.data.Close.astype(float)
+            high = self.data.High.astype(float)
+            low = self.data.Low.astype(float)
+            volume = self.data.Volume.astype(float)
             
             # Moving Averages
             if indicator_name == 'sma':
@@ -240,9 +240,14 @@ class DynamicStrategy(Strategy):
             
             elif indicator_name == 'vwap':
                 period = int(params[0])
-                typical_price = (high + low + close) / 3
-                vwap = self.I(lambda: talib.SMA(typical_price * volume, period) / talib.SMA(volume, period))
-                self.indicators[f'vwap_{period}'] = vwap
+                # Calculate VWAP using vectorized operations
+                def calculate_vwap():
+                    typical_price = (high + low + close) / 3.0
+                    cumsum_tp_vol = (typical_price * volume).rolling(window=period).sum()
+                    cumsum_vol = volume.rolling(window=period).sum()
+                    return cumsum_tp_vol / cumsum_vol
+                
+                self.indicators[f'vwap_{period}'] = self.I(calculate_vwap)
             
             # Momentum Indicators
             elif indicator_name == 'rsi':
@@ -623,7 +628,7 @@ class BacktestingAgent:
             raise
 
 
-
+##### Example usage
 def main():
     """Main function to run the backtesting agent."""
     try:
@@ -631,7 +636,7 @@ def main():
         backtest_agent = BacktestingAgent()
         
         # Use the first company from config or default to TATASTEEL
-        company_name = backtest_agent.companies[0] if backtest_agent.companies else "TATASTEEL"
+        company_name = backtest_agent.companies[0] if backtest_agent.companies else "ZOMATO"
         
         # Run backtest
         backtest_agent.run_backtest(company_name, algo_num=1)
