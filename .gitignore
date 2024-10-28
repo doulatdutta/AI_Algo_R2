@@ -8,6 +8,11 @@ venv
 .delete\tatasteel_algorithm-3.json
 .delete\technical_indicators.py
 TA_Lib-0.4.32-cp312-cp312-win_amd64.whl
+output\algo/
+output/backtest_results/
+output\checking_results/
+output\checking_results/
+output\feedback_logs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
