@@ -1,41 +1,47 @@
 {
     "buy_conditions": [
         {
-            "raw_condition": "**"
+            "raw_condition": "1. rsi(28) < 35 and rsi < ema(rsi, 10)"
         },
         {
-            "raw_condition": "sma(20) > sma(50)"
+            "raw_condition": "2. price crosses above supply/demand zone (demand zone)"
         },
         {
-            "raw_condition": "rsi(14) < 30"
+            "raw_condition": "3. close above ALMA with multiplier 8 on a 15-minute timeframe"
         },
         {
-            "raw_condition": "ema(20) > ema(50)"
+            "raw_condition": "4. supertrend direction is positive"
         },
         {
-            "raw_condition": "atr(15) > vwap(15)"
+            "raw_condition": "5. ema(144) > close on multiple timeframes (e.g., 1, 3, 5 min)"
+        },
+        {
+            "raw_condition": "6. ATR-based volatility filter within acceptable range"
         }
     ],
     "sell_conditions": [
         {
-            "raw_condition": "**"
+            "raw_condition": "1. rsi(28) > 65 and rsi > ema(rsi, 10)"
         },
         {
-            "raw_condition": "macd(12, 26) > macd(12, 26)[-1]"
+            "raw_condition": "2. price crosses below supply/demand zone (supply zone)"
         },
         {
-            "raw_condition": "sma(20) < sma(50)"
+            "raw_condition": "3. close below ALMA with multiplier 8 on a 15-minute timeframe"
         },
         {
-            "raw_condition": "bollinger bands(20, 2, 2) < lower band"
+            "raw_condition": "4. supertrend direction is negative"
         },
         {
-            "raw_condition": "cci(14) < -100"
+            "raw_condition": "5. ema(144) < close on multiple timeframes (e.g., 1, 3, 5 min)"
+        },
+        {
+            "raw_condition": "6. ATR-based volatility filter within acceptable range"
         }
     ],
     "metadata": {
         "company": "ZOMATO",
-        "generated_at": "2024-10-28T22:53:16.183199",
+        "generated_at": "2024-10-28T21:51:50.912288",
         "model": "llama3.2"
     }
 }
