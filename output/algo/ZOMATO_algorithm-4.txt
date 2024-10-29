@@ -1,0 +1,13 @@
+Buy Conditions:
+rsi(14) < 30
+sma(20) > sma(50)
+macd > macdh
+atr(14) <= atr(7)*2
+cci(14) >= -100
+
+Sell Conditions:
+rsi(14) > 70
+sma(20) < sma(50)
+stoch(14, 3, 3) <= 20
+obv(20) <= vpt(20)
+adx(14) >= 30

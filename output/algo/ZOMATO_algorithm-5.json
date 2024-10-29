@@ -1,0 +1,41 @@
+{
+    "buy_conditions": [
+        {
+            "raw_condition": "**"
+        },
+        {
+            "raw_condition": "rsi(14) < 30"
+        },
+        {
+            "raw_condition": "sma(20) > sma(50)"
+        },
+        {
+            "raw_condition": "sma(10) > sma(80)"
+        },
+        {
+            "raw_condition": "atr(15) <= 2.0"
+        }
+    ],
+    "sell_conditions": [
+        {
+            "raw_condition": "**"
+        },
+        {
+            "raw_condition": "sma(20) > sma(50)"
+        },
+        {
+            "raw_condition": "rsi(14) > 70"
+        },
+        {
+            "raw_condition": "macd(12, 26) < macd(12, 26) * 3"
+        },
+        {
+            "raw_condition": "cci(10) <= -100"
+        }
+    ],
+    "metadata": {
+        "company": "ZOMATO",
+        "generated_at": "2024-10-29T09:33:46.247105",
+        "model": "llama3.2"
+    }
+}

@@ -1,0 +1,13 @@
+Buy Conditions:
+**
+rsi(14) < 30
+sma(20) > sma(50)
+sma(10) > sma(80)
+atr(15) <= 2.0
+
+Sell Conditions:
+**
+sma(20) > sma(50)
+rsi(14) > 70
+macd(12, 26) < macd(12, 26) * 3
+cci(10) <= -100
