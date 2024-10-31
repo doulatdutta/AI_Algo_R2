@@ -1,7 +1,0 @@
-Algorithm Check #1
-Required Return: 30.0%
-Max Drawdown: 20.0%
-
-Return [%] Checking: Not Good (-99.75% < 30.0%)
-
-Final result of checking: not good

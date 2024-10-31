@@ -1,0 +1,94 @@
+//@version=5
+strategy(    "AlgoPoint Strategy V3", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
+
+// === INPUTS ===
+// Time Settings
+startDate = input.time(defval = timestamp("1 Jan 2024"), title="Start Date")
+endDate = input.time(defval = timestamp("31 Dec 2024"), title="End Date")
+
+// Strategy Parameters
+sensitivity = input.float(200, "Sensitivity", minval=1)
+atrLength = input.int(5, "ATR Length", minval=1)
+rsiLength = input.int(14, "RSI Length", minval=1)
+rsiOverbought = input.int(45, "RSI Overbought", minval=0, maxval=100)
+rsiOversold = input.int(10, "RSI Oversold", minval=0, maxval=100)
+
+// Take Profit Settings
+useMultiTP = input.bool(true, "Use Multiple Take Profits")
+tp1 = input.float(0.9, "TP1 %", minval=0.1)
+tp2 = input.float(1.8, "TP2 %", minval=0.1)
+tp3 = input.float(3.6, "TP3 %", minval=0.1)
+tp4 = input.float(5.0, "TP4 %", minval=0.1)
+
+// Exit Quantities
+qty1 = input.float(30, "Exit at TP1 %", minval=1, maxval=100)
+qty2 = input.float(30, "Exit at TP2 %", minval=1, maxval=100)
+qty3 = input.float(20, "Exit at TP3 %", minval=1, maxval=100)
+qty4 = input.float(20, "Exit at TP4 %", minval=1, maxval=100)
+
+// Stop Loss
+stopLoss = input.float(3.0, "Stop Loss %", minval=0.1)
+
+// === CALCULATIONS ===
+// ATR Filter
+atr = ta.atr(atrLength)
+atrMA = ta.sma(atr, atrLength)
+
+// RSI Filter
+rsi = ta.rsi(close, rsiLength)
+isOverbought = rsi > rsiOverbought
+isOversold = rsi < rsiOversold
+
+// Fibonacci Levels
+highestHigh = ta.highest(high, int(sensitivity))
+lowestLow = ta.lowest(low, int(sensitivity))
+priceRange = highestHigh - lowestLow
+
+entryLevel = highestHigh - priceRange * 0.236
+trendLine = highestHigh - priceRange * 0.5
+stopLevel = highestHigh - priceRange * 0.618
+
+// === ENTRY CONDITIONS ===
+inTimeWindow = time >= startDate and time <= endDate
+validFilter = (atr >= atrMA) and (isOverbought or isOversold)
+
+longCondition = close >= trendLine and close >= entryLevel and validFilter and inTimeWindow
+shortCondition = close <= trendLine and close <= highestHigh - (priceRange * 0.786) and validFilter and inTimeWindow
+
+// === STRATEGY EXECUTION ===
+if longCondition and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+
+if shortCondition and strategy.position_size == 0
+    strategy.entry("Short", strategy.short)
+
+// === EXIT RULES ===
+if useMultiTP and strategy.position_size != 0
+    // Take Profits for Long positions
+    if strategy.position_size > 0
+        strategy.exit("TP1_L", "Long", qty_percent=qty1, profit=strategy.position_avg_price * tp1/100)
+        strategy.exit("TP2_L", "Long", qty_percent=qty2, profit=strategy.position_avg_price * tp2/100)
+        strategy.exit("TP3_L", "Long", qty_percent=qty3, profit=strategy.position_avg_price * tp3/100)
+        strategy.exit("TP4_L", "Long", qty_percent=qty4, profit=strategy.position_avg_price * tp4/100)
+        
+        // Stop Loss for Long
+        strategy.exit("SL_L", "Long", stop=strategy.position_avg_price * (1 - stopLoss/100))
+    
+    // Take Profits for Short positions
+    if strategy.position_size < 0
+        strategy.exit("TP1_S", "Short", qty_percent=qty1, profit=strategy.position_avg_price * tp1/100)
+        strategy.exit("TP2_S", "Short", qty_percent=qty2, profit=strategy.position_avg_price * tp2/100)
+        strategy.exit("TP3_S", "Short", qty_percent=qty3, profit=strategy.position_avg_price * tp3/100)
+        strategy.exit("TP4_S", "Short", qty_percent=qty4, profit=strategy.position_avg_price * tp4/100)
+        
+        // Stop Loss for Short
+        strategy.exit("SL_S", "Short", stop=strategy.position_avg_price * (1 + stopLoss/100))
+
+// === PLOTTING ===
+plot(trendLine, "Trend Line", color=color.blue, linewidth=2)
+plot(entryLevel, "Entry Level", color=color.green, linewidth=1)
+plot(stopLevel, "Stop Level", color=color.red, linewidth=1)
+
+// Plot signals
+plotshape(longCondition, "Long Signal", shape.triangleup, location.belowbar, color.green, size=size.small)
+plotshape(shortCondition, "Short Signal", shape.triangledown, location.abovebar, color.red, size=size.small)

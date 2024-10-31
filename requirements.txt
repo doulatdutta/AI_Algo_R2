@@ -15,8 +15,17 @@ setuptools
 rich
 questionary
 llama-cpp-python
+plotly
+seaborn
 
 #  ollama pull llama3.2
+
+# for model
+numpy 
+pandas 
+scikit-learn
+tensorflow 
+keras 
 
 
 

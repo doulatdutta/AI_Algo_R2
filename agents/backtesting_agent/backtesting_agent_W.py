@@ -588,15 +588,15 @@ class BacktestingAgent:
             raise
 
 
-
+# Example usage
 def main():
     """Main function to run the backtesting agent."""
     try:
         logger.info("Starting backtesting agent")
         backtest_agent = BacktestingAgent()
         
-        # Use the first company from config or default to TATASTEEL
-        company_name = backtest_agent.companies[0] if backtest_agent.companies else "TATASTEEL"
+        # Use the first company from config or default to ZOMATO
+        company_name = backtest_agent.companies[0] if backtest_agent.companies else "ZOMATO"
         
         # Run backtest
         backtest_agent.run_backtest(company_name, algo_num=1)

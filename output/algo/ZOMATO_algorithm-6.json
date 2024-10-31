@@ -26,26 +26,26 @@
         {
             "indicator1": "high_ma",
             "indicator2": "low_ma",
-            "condition": "crossover",
-            "action": "buy",
-            "size": 0.99
+            "condition": "crossunder",
+            "action": "sell_short",
+            "size": 1.05
         }
     ],
     "exit_conditions": [
         {
             "indicator1": "close_ma",
             "indicator2": "open_ma",
-            "condition": "crossunder",
+            "condition": "crossover",
             "action": "exit_long"
         },
         {
             "indicator1": "high_ma",
             "indicator2": "low_ma",
             "condition": "crossunder",
-            "action": "exit_short"
+            "action": "sell_short"
         }
     ],
-    "generated_at": "2024-10-31T22:31:43.739512",
+    "generated_at": "2024-11-01T01:13:17.898781",
     "company": "ZOMATO",
     "api_provider": "ollama",
     "model": "qwen2.5:1.5b"

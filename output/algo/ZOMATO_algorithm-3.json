@@ -1,47 +1,41 @@
 {
-    "buy_conditions": [
+    "strategy_name": "ZOMATO_Strategy",
+    "timeframe": "1D",
+    "indicators": [
         {
-            "raw_condition": "1. rsi(28) < 35 and rsi < ema(rsi, 10)"
+            "type": "SMA",
+            "settings": {
+                "period": 20
+            }
         },
         {
-            "raw_condition": "2. price crosses above supply/demand zone (demand zone)"
-        },
-        {
-            "raw_condition": "3. close above ALMA with multiplier 8 on a 15-minute timeframe"
-        },
-        {
-            "raw_condition": "4. supertrend direction is positive"
-        },
-        {
-            "raw_condition": "5. ema(144) > close on multiple timeframes (e.g., 1, 3, 5 min)"
-        },
-        {
-            "raw_condition": "6. ATR-based volatility filter within acceptable range"
+            "type": "RSI",
+            "settings": {
+                "period": 14
+            }
         }
     ],
-    "sell_conditions": [
+    "entry_conditions": [
         {
-            "raw_condition": "1. rsi(28) > 65 and rsi > ema(rsi, 10)"
-        },
-        {
-            "raw_condition": "2. price crosses below supply/demand zone (supply zone)"
-        },
-        {
-            "raw_condition": "3. close below ALMA with multiplier 8 on a 15-minute timeframe"
-        },
-        {
-            "raw_condition": "4. supertrend direction is negative"
-        },
-        {
-            "raw_condition": "5. ema(144) < close on multiple timeframes (e.g., 1, 3, 5 min)"
-        },
-        {
-            "raw_condition": "6. ATR-based volatility filter within acceptable range"
+            "indicator": "SMA",
+            "condition": "crossover",
+            "value": 20
         }
     ],
-    "metadata": {
-        "company": "ZOMATO",
-        "generated_at": "2024-10-28T21:51:50.912288",
-        "model": "llama3.2"
-    }
+    "exit_conditions": [
+        {
+            "indicator": "RSI",
+            "condition": "greater_than",
+            "value": 70
+        }
+    ],
+    "risk_management": {
+        "stop_loss": 2,
+        "take_profit": 4,
+        "position_size": 100
+    },
+    "generated_at": "2024-10-31T21:53:17.941723",
+    "company": "ZOMATO",
+    "api_provider": "ollama",
+    "model": "qwen2.5:1.5b"
 }

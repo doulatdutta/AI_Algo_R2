@@ -246,6 +246,11 @@ AI_Algo_R2
     python -m agents.automated_feedback.automated_feedback
 ```
 
+
+python -m test_backtest.zomato-backtest
+
+
+
 ## Usage
 
 Run the main script to initiate the entire workflow:

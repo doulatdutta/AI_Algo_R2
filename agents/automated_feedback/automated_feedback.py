@@ -153,24 +153,24 @@ Use this feedback to {'maintain high performance' if is_good else 'generate impr
             f.write(f"Feedback Sent:\n{feedback['content']}\n")
             f.write(f"Model Response:\n{response}\n")
 
-# Example usage in main.py
-if __name__ == "__main__":
-    def process_algo_feedback(company_name: str, algo_num: int):
-        """
-        Main function to process and send feedback
-        """
-        feedback_system = TradingFeedbackSystem(
-            model_name='llama3.2',  # or your specific model
-            base_dir='output'     # your base directory
-        )
+# # Example usage in main.py
+# if __name__ == "__main__":
+#     def process_algo_feedback(company_name: str, algo_num: int):
+#         """
+#         Main function to process and send feedback
+#         """
+#         feedback_system = TradingFeedbackSystem(
+#             model_name='llama3.2',  # or your specific model
+#             base_dir='output'     # your base directory
+#         )
         
-        response = feedback_system.send_feedback(company_name, algo_num)
+#         response = feedback_system.send_feedback(company_name, algo_num)
         
-        if response:
-            print("Feedback processed successfully")
-            print("Ollama's response:", response)
-        else:
-            print("Error processing feedback")
+#         if response:
+#             print("Feedback processed successfully")
+#             print("Ollama's response:", response)
+#         else:
+#             print("Error processing feedback")
     
-    ### Example usage:
-    # process_algo_feedback('ZOMATO', 1)
+#     ### Example usage:
+#     # process_algo_feedback('ZOMATO', 1)

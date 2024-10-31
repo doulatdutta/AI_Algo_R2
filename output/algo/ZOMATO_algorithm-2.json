@@ -1,9 +1,12 @@
 {
-    "buy_conditions": [],
-    "sell_conditions": [],
-    "metadata": {
-        "company": "ZOMATO",
-        "generated_at": "2024-10-28T22:52:36.825957",
-        "model": "llama3.2"
-    }
+    "pine_script_version": 5,
+    "strategy_name": "ZOMATO_algorithm-2",
+    "company": "ZOMATO",
+    "generated_at": "2024-10-31T02:50:36.381780",
+    "api_provider": "ollama",
+    "model": "qwen2.5:1.5b",
+    "entry_conditions": [],
+    "exit_conditions": [],
+    "indicators": [],
+    "risk_params": {}
 }

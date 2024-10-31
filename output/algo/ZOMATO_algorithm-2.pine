@@ -1,0 +1,43 @@
+```pinescript
+//@version=5
+strategy(title='SAIYAN OCC Strategy R5.41', overlay=true, pyramiding=0, default_qty_type=strategy.percent_of_equity, default_qty_value=10, calc_on_every_tick=false)
+
+// === INPUTS ===
+useRes = input.bool(true, title="Use Alternate Resolution")
+max_bars_back = input.int(4000, title="Max Bars Back Testing")
+
+// === SIGNALS ===
+slPoints = input.int(defval=0, title='Initial Stop Loss Points (0 to disable)', minval=0)
+tpPoints = input.int(defval=0, title='Initial Take Profit Points (0 to disable)', minval=0)
+
+basisType = input.symbol("Close")
+basisLen = input.int(14)
+offsetSig = input.int(2.5)
+offsetALMA = input.int(2.5)
+
+// === SECURITY WRAPPER ===
+sym = symbol('AAPL')
+res = useRes ? '5D' : sym
+
+closeSeriesAlt = useRes ? request.security(sym, res, close[basisLen], barmerge.gaps_off, barmerge.lookahead_off) : close
+openSeriesAlt = useRes ? request.security(sym, res, open[basisLen], barmerge.gaps_off, barmerge.lookahead_off) : open
+
+// === SIGNAL CONDITIONS ===
+buySignal = ta.crossover(closeSeriesAlt, openSeriesAlt)
+sellSignal = ta.crossunder(closeSeriesAlt, openSeriesAlt)
+
+// === PLOT SIGNALS ===
+plotshape(buySignal, title="Buy", text="Buy", style=shape.labelup, location=location.belowbar, color=#00DBFF, textcolor=color.white, size=size.tiny)
+plotshape(sellSignal, title="Sell", text="Sell", style=shape.labeldown, location=location.abovebar, color=#E91E63, textcolor=color.white, size=size.tiny)
+
+// === STRATEGY EXECUTION ===
+if buySignal
+    strategy.entry("Long", strategy.long)
+    if tpPoints > 0
+        strategy.exit("TP Long", "Long", limit=close + tpPoints, stop=slPoints > 0 ? close - slPoints : na)
+
+if sellSignal
+    strategy.entry("Short", strategy.short)
+    if tpPoints > 0
+        strategy.exit("TP Short", "Short", limit=close - tpPoints, stop=slPoints > 0 ? close + slPoints : na)
+```

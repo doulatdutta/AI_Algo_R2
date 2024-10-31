@@ -13,6 +13,9 @@ output/backtest_results/
 output\checking_results/
 output\checking_results/
 output\feedback_logs/
+test
+test_backtest
+model
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

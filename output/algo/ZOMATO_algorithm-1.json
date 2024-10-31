@@ -1,41 +1,68 @@
 {
-    "buy_conditions": [
+    "indicators": [
         {
-            "raw_condition": "rsi(14) < 30"
+            "type": "SMA",
+            "name": "sma_fast",
+            "params": {
+                "length": 10,
+                "source": "Close"
+            }
         },
         {
-            "raw_condition": "sma(20) > sma(50)"
+            "type": "SMA",
+            "name": "sma_slow",
+            "params": {
+                "length": 20,
+                "source": "Close"
+            }
         },
         {
-            "raw_condition": "ema(20) < ema(50)"
-        },
-        {
-            "raw_condition": "keltner channels(20, 2.0) > upper keltner"
-        },
-        {
-            "raw_condition": "vwap(5) > vwap(10)"
+            "type": "RSI",
+            "name": "rsi",
+            "params": {
+                "length": 14,
+                "source": "Close"
+            }
         }
     ],
-    "sell_conditions": [
+    "entry_conditions": [
         {
-            "raw_condition": "rsi(14) > 70"
-        },
-        {
-            "raw_condition": "sma(20) < sma(50)"
-        },
-        {
-            "raw_condition": "macd(12, 26) < crossover signal"
-        },
-        {
-            "raw_condition": "bollinger bands(20, 2.0) > upper bollinger band"
-        },
-        {
-            "raw_condition": "ccl(15) <= -200"
+            "indicator1": "sma_fast",
+            "indicator2": "sma_slow",
+            "condition": "crossover",
+            "action": "buy",
+            "size": 0.95
         }
     ],
-    "metadata": {
-        "company": "ZOMATO",
-        "generated_at": "2024-10-28T22:34:50.539396",
-        "model": "llama3.2"
-    }
+    "exit_conditions": [
+        {
+            "indicator1": "sma_fast",
+            "indicator2": "sma_slow",
+            "condition": "crossunder",
+            "action": "exit_long"
+        }
+    ],
+    "short_conditions": [
+        {
+            "indicator1": "sma_fast",
+            "indicator2": "sma_slow",
+            "condition": "crossunder",
+            "action": "sell",
+            "size": 0.95
+        }
+    ],
+    "short_exit_conditions": [
+        {
+            "indicator1": "sma_fast",
+            "indicator2": "sma_slow",
+            "condition": "crossover",
+            "action": "exit_short"
+        }
+    ],
+    "trading_hours": {
+        "start": "09:15",
+        "end": "15:30"
+    },
+    "initial_capital": 100000,
+    "commission": 0.002
 }
