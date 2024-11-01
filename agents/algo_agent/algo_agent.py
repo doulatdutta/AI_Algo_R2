@@ -423,10 +423,10 @@ class AlgoAgent:
             logger.error(f"Error saving algorithm: {e}")
             raise
 
-if __name__ == "__main__":
-    try:
-        algo_agent = AlgoAgent("ZOMATO")
-        algo_agent.generate_algorithms()
-    except Exception as e:
-        logger.error(f"Main execution failed: {e}")
-        raise
+# if __name__ == "__main__":
+#     try:
+#         algo_agent = AlgoAgent("ZOMATO")
+#         algo_agent.generate_algorithms()
+#     except Exception as e:
+#         logger.error(f"Main execution failed: {e}")
+#         raise

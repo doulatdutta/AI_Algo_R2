@@ -308,17 +308,17 @@ class HistoricalDataDownloader:
 
 
 ### Example usage
-def main():
-    """Example usage"""
-    downloader = HistoricalDataDownloader()
-    stocks = ["ZOMATO"]  # Start with one stock for testing
+# def main():
+#     """Example usage"""
+#     downloader = HistoricalDataDownloader()
+#     stocks = ["ZOMATO"]  # Start with one stock for testing
     
-    for stock in stocks:
-        success = downloader.download_historical_data(stock)
-        if success:
-            print(f"Successfully downloaded/updated data for {stock}")
-        else:
-            print(f"Failed to download/update data for {stock}")
+#     for stock in stocks:
+#         success = downloader.download_historical_data(stock)
+#         if success:
+#             print(f"Successfully downloaded/updated data for {stock}")
+#         else:
+#             print(f"Failed to download/update data for {stock}")
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

@@ -161,40 +161,53 @@ class EnhancedTradingFeedbackSystem:
                                 algo_config: Dict[str, Any], 
                                 backtest_results: Dict[str, Any],
                                 is_good: bool) -> str:
-        """Generate structured strategy feedback with specific parameter recommendations"""
+        """Generate comprehensive strategy feedback with market context"""
         
+        # Enhanced performance assessment
+        performance_assessment = []
+        
+        # Market context analysis
         volatility = historical_analysis.get('price_volatility', 0)
         volume = historical_analysis.get('avg_volume', 0)
         rsi = historical_analysis.get('avg_rsi', 0)
         
-        # Calculate optimal parameters based on market conditions
-        optimal_length = int(max(5, min(10, volatility)))
-        optimal_sigma = 5.0 if volatility < 10 else 6.0 if volatility < 15 else 7.5
-        optimal_position = min(1.0, volume / 500000)  # Scale position size based on volume
+        # Assess market conditions
+        market_condition = []
+        if volatility > 0:
+            if volatility > 15:
+                market_condition.append("High volatility environment")
+            elif volatility > 10:
+                market_condition.append("Moderate volatility environment")
+            else:
+                market_condition.append("Low volatility environment")
+                
+        if rsi > 70:
+            market_condition.append("Overbought conditions")
+        elif rsi < 30:
+            market_condition.append("Oversold conditions")
+        else:
+            market_condition.append("Neutral RSI conditions")
         
+        # Assess trading activity
+        trades = backtest_results.get('total_trades', 0)
+        if trades == 0:
+            performance_assessment.append("Strategy did not generate any trades - consider relaxing entry conditions")
+        elif trades < 10:
+            performance_assessment.append("Low trading frequency - consider adjusting signal sensitivity")
+        else:
+            performance_assessment.append(f"Strategy generated {trades} trades")
+
+        # Format feedback message with market context
         feedback = f"""Trading Strategy Analysis and Feedback
 
-    1. Market Environment:
-    --------------------
+    Market Environment:
     - Volatility Level: {volatility:.2f} ({"High" if volatility > 15 else "Moderate" if volatility > 10 else "Low"})
     - Average Daily Volume: {volume:.0f} shares
     - RSI Level: {rsi:.2f} ({"Overbought" if rsi > 70 else "Oversold" if rsi < 30 else "Neutral"})
-    - Market Conditions: {
-        "High volatility environment, " if volatility > 15 
-        else "Moderate volatility environment, " if volatility > 10 
-        else "Low volatility environment, "
-    }{
-        "Overbought conditions" if rsi > 70 
-        else "Oversold conditions" if rsi < 30 
-        else "Neutral RSI conditions"
-    }
+    - Market Conditions: {', '.join(market_condition)}
 
-    2. Current Configuration Analysis:
-    --------------------------------
-    Current ALMA Settings:
-    - Length: {algo_config.get('moving_averages', [{}])[0].get('length', 2)} (Too short for current volatility)
-    - Offset: {algo_config.get('moving_averages', [{}])[0].get('offset', 0.85)}
-    - Sigma: {algo_config.get('moving_averages', [{}])[0].get('sigma', 5.0)}
+    Strategy Configuration:
+    {json.dumps(algo_config, indent=2)}
 
     Performance Metrics:
     - Total Trades: {backtest_results.get('total_trades', 0)}
@@ -203,70 +216,62 @@ class EnhancedTradingFeedbackSystem:
     - Maximum Drawdown: {backtest_results.get('max_drawdown', 0):.2f}%
     - Win Rate: {backtest_results.get('win_rate', 0):.2f}%
 
-    3. Recommended Parameter Adjustments:
-    ----------------------------------
-    a) ALMA Optimization:
-    - Increase length to {optimal_length} periods (matches current volatility)
-    - Keep offset at 0.85 (suitable for current trend following)
-    - Adjust sigma to {optimal_sigma} (optimized for {volatility:.1f} volatility)
+    Key Observations:
+    {chr(10).join(f"- {item}" for item in performance_assessment)}
 
-    b) Position Sizing:
-    - Reduce position size to {optimal_position:.2f} (based on {volume:.0f} avg volume)
-    - Add incremental scaling based on signal strength
+    Market-Specific Recommendations:"""
 
-    c) Risk Management:
-    - Add stop-loss: {-0.5 if volatility < 10 else -0.75 if volatility < 15 else -1.0}%
-    - Take profit: {1.0 if volatility < 10 else 1.5 if volatility < 15 else 2.0}%
-    - Trail stop: {0.3 if volatility < 10 else 0.5 if volatility < 15 else 0.7}%
+        # Add market-specific recommendations
+        if volatility > 15:
+            feedback += """
+    1. High Volatility Environment:
+    - Widen stop-loss levels to accommodate price swings
+    - Reduce position sizes to manage risk
+    - Consider using volatility-based position sizing
+    - Add volatility filters to entry conditions"""
+        elif volatility > 10:
+            feedback += """
+    1. Moderate Volatility Environment:
+    - Use adaptive stop-loss levels
+    - Maintain standard position sizes
+    - Consider adding trend confirmation signals
+    - Monitor volatility breakouts"""
+        else:
+            feedback += """
+    1. Low Volatility Environment:
+    - Tighten stop-loss levels
+    - Consider increasing position sizes
+    - Look for breakout opportunities
+    - Add range-trading strategies"""
 
-    4. Recommended JSON Updates:
-    --------------------------
-    {{
-    "moving_averages": [
-        {{
-        "type": "ALMA",
-        "length": {optimal_length},
-        "offset": 0.85,
-        "sigma": {optimal_sigma},
-        "source": "Close",
-        "name": "close_ma"
-        }}
-    ],
-    "entry_conditions": [
-        {{
-        "indicator1": "close_ma",
-        "indicator2": "open_ma",
-        "condition": "crossover",
-        "action": "buy",
-        "size": {optimal_position:.2f},
-        "stop_loss": {-0.75 if volatility < 15 else -1.0},
-        "take_profit": {1.5 if volatility < 15 else 2.0},
-        "trail_stop": {0.5 if volatility < 15 else 0.7},
-        "min_volume": {int(volume * 0.3)},
-        "rsi_filter": {{
-            "enabled": true,
-            "min": 30,
-            "max": 70
-        }}
-        }}
-    ],
-    "exit_conditions": [
-        {{
-        "indicator1": "close_ma",
-        "indicator2": "open_ma",
-        "condition": "crossover",
-        "action": "exit_long",
-        "trail_stop": true
-        }}
-    ]
-    }}
+        feedback += f"\n\n2. Volume Considerations (Avg: {volume:.0f}):"
+        if volume > 500000:
+            feedback += """
+    - High liquidity environment suitable for larger positions
+    - Consider using volume-weighted prices
+    - Monitor for unusual volume spikes"""
+        else:
+            feedback += """
+    - Monitor liquidity constraints
+    - Use smaller position sizes
+    - Add volume filters to entry conditions"""
 
-    5. Expected Impact:
-    -----------------
-    - More stable signals due to increased ALMA length
-    - Better risk management with volatility-adjusted stops
-    - Improved position sizing based on market liquidity
-    - Additional protection through RSI filters"""
+        feedback += f"\n\n3. RSI-Based Adjustments (Current: {rsi:.2f}):"
+        if rsi > 70:
+            feedback += """
+    - Look for potential reversal signals
+    - Tighten profit-taking levels
+    - Add overbought filters"""
+        elif rsi < 30:
+            feedback += """
+    - Watch for oversold bounces
+    - Add trend confirmation signals
+    - Consider gradual position building"""
+        else:
+            feedback += """
+    - Maintain standard trading parameters
+    - Monitor for trend developments
+    - Use RSI for trade confirmation"""
 
         return feedback
 
@@ -315,28 +320,26 @@ class EnhancedTradingFeedbackSystem:
             f.write(f"Feedback:\n{feedback}\n")
             f.write(f"Model Response:\n{response}\n")
 
-
-
-# if __name__ == "__main__":
-#     try:
-#         feedback_system = EnhancedTradingFeedbackSystem(
-#             model_name='qwen2.5:1.5b',
-#             base_dir='output'
-#         )
+if __name__ == "__main__":
+    try:
+        feedback_system = EnhancedTradingFeedbackSystem(
+            model_name='qwen2.5:1.5b',
+            base_dir='output'
+        )
         
-#         company_name = 'ZOMATO'
-#         # Automatically get latest algorithm number
-#         algo_num = feedback_system.get_latest_algo_number(company_name)
-#         is_good = False
+        company_name = 'ZOMATO'
+        # Automatically get latest algorithm number
+        algo_num = feedback_system.get_latest_algo_number(company_name)
+        is_good = False
         
-#         print(f"Processing feedback for {company_name} algorithm {algo_num}")
-#         response = feedback_system.process_feedback(company_name, algo_num, is_good)
+        print(f"Processing feedback for {company_name} algorithm {algo_num}")
+        response = feedback_system.process_feedback(company_name, algo_num, is_good)
         
-#         if response:
-#             print("Feedback processed successfully")
-#             print("Model response:", response)
-#         else:
-#             print("Error processing feedback")
+        if response:
+            print("Feedback processed successfully")
+            print("Model response:", response)
+        else:
+            print("Error processing feedback")
             
-#     except Exception as e:
-#         print(f"Main execution error: {e}")
+    except Exception as e:
+        print(f"Main execution error: {e}")

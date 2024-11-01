@@ -2,5 +2,12 @@
     "ZOMATO": {
         "last_download_date": "2024-10-29",
         "last_download_timestamp": "2024-10-29T09:31:33.141839"
+    },
+    "companies": {
+        "ZOMATO": {
+            "last_download_date": "2024-11-02",
+            "last_download_timestamp": "2024-11-02T00:13:17.889102",
+            "status": "success"
+        }
     }
 }

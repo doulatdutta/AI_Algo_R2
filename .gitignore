@@ -9,13 +9,16 @@ venv
 .delete\technical_indicators.py
 TA_Lib-0.4.32-cp312-cp312-win_amd64.whl
 output\algo/
-output/backtest_results/
+output\backtest_results/
 output\checking_results/
 output\checking_results/
 output\feedback_logs/
 test
 test_backtest
 model
+agents\backtesting_agent\backtesting_agent_W.py
+agents\backtesting_agent\backtesting_agent_pine.py
+agents\backtesting_agent\technical_indicators.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

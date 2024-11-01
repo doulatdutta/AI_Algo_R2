@@ -5,7 +5,7 @@ api_provider: "ollama"  # Options: "openai", "ollama", "groq"
 
 # Ollama Configuration
 ollama:  # Changed from 'Ollama' to 'ollama' for consistency
-  model: "qwen2.5:1.5b"
+  model: "qwen2.5:1.5b"  # Options: "algo_DD", "llama3.2", "qwen2.5:1.5b"
 
 # OpenAI Configuration
 openai:  # Changed from 'OPENAI' to 'openai' for consistency
@@ -21,22 +21,22 @@ groq:
 # algo_agent:
 #   number_of_algorithms: 1
 
-# Backtesting Configuration
+# Backtesting_agnet.py Configuration
 backtesting:
   stocks_per_trade: 10
   historical_data_path: "agents/backtesting_agent/historical_data/"
-  algorithm_path: "output/logs/"
-  output_path: "output/"
+  # algorithm_path: "output/logs/"
+  # output_path: "output/"
   lookback_days: 30
 
-# Strategy Configuration
+# Checker_agnet.py Configuration
 configuration:
   Return [%]: 30.00
   max_drawdown: 20
   number of checking: 10
   reduce %: 5
 
-# Data Configuration
+# Data_download.py Configuration
 
 historical_days: 90
 chunk_size: 7
@@ -46,5 +46,3 @@ delay_between_attempts: 90
 delay_between_chunks: 65
 
 
-#  ["historical_days", "chunk_size", "data_interval", "max_attempts", 
-#                                 "delay_between_attempts", "delay_between_chunks"]

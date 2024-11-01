@@ -1105,56 +1105,56 @@ class BacktestingAgent:
 # Example usage
 
 
-def main():
-    """Example usage of backtesting agent with specified company."""
-    try:
-        # Configure logging
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s'
-        )
-        logger.info("Starting backtesting agent")
+# def main():
+#     """Example usage of backtesting agent with specified company."""
+#     try:
+#         # Configure logging
+#         logging.basicConfig(
+#             level=logging.INFO,
+#             format='%(asctime)s - %(levelname)s - %(message)s'
+#         )
+#         logger.info("Starting backtesting agent")
         
-        # Initialize backtesting agent
-        backtest_agent = BacktestingAgent()
+#         # Initialize backtesting agent
+#         backtest_agent = BacktestingAgent()
         
-        # Specify company name here
-        company_name = "ZOMATO"  # <-- Change this to test different companies
+#         # Specify company name here
+#         company_name = "ZOMATO"  # <-- Change this to test different companies
         
-        # Log strategy loading
-        logger.info(f"Loading strategy for {company_name}")
+#         # Log strategy loading
+#         logger.info(f"Loading strategy for {company_name}")
         
-        # Run backtest
-        stats = backtest_agent.run_backtest(
-            company_name=company_name,
-            start_date="2024-01-01 00:00:00",
-            end_date="2024-10-31 23:59:59"
-        )
+#         # Run backtest
+#         stats = backtest_agent.run_backtest(
+#             company_name=company_name,
+#             start_date="2024-01-01 00:00:00",
+#             end_date="2024-10-31 23:59:59"
+#         )
         
-        # Print comprehensive results
-        print("\nBacktest Results Summary")
-        print("=" * 50)
-        print(f"Company: {company_name}")
-        print(f"\nPerformance Metrics:")
-        print(f"Total Return: {stats['Return [%]']:.2f}%")
-        print(f"Annual Return: {stats['Return (Ann.) [%]']:.2f}%")
-        print(f"Sharpe Ratio: {stats['Sharpe Ratio']:.2f}")
-        print(f"Max Drawdown: {stats['Max. Drawdown [%]']:.2f}%")
-        print(f"Win Rate: {stats['Win Rate [%]']:.2f}%")
-        print(f"Total Trades: {stats['# Trades']}")
+#         # Print comprehensive results
+#         print("\nBacktest Results Summary")
+#         print("=" * 50)
+#         print(f"Company: {company_name}")
+#         print(f"\nPerformance Metrics:")
+#         print(f"Total Return: {stats['Return [%]']:.2f}%")
+#         print(f"Annual Return: {stats['Return (Ann.) [%]']:.2f}%")
+#         print(f"Sharpe Ratio: {stats['Sharpe Ratio']:.2f}")
+#         print(f"Max Drawdown: {stats['Max. Drawdown [%]']:.2f}%")
+#         print(f"Win Rate: {stats['Win Rate [%]']:.2f}%")
+#         print(f"Total Trades: {stats['# Trades']}")
         
-        print(f"\nRisk Metrics:")
-        print(f"Volatility (Ann.): {stats['Volatility (Ann.) [%]']:.2f}%")
-        print(f"Sortino Ratio: {stats['Sortino Ratio']:.2f}")
-        print(f"Calmar Ratio: {stats['Calmar Ratio']:.2f}")
+#         print(f"\nRisk Metrics:")
+#         print(f"Volatility (Ann.): {stats['Volatility (Ann.) [%]']:.2f}%")
+#         print(f"Sortino Ratio: {stats['Sortino Ratio']:.2f}")
+#         print(f"Calmar Ratio: {stats['Calmar Ratio']:.2f}")
         
-        logger.info("Backtesting completed successfully")
-        logger.info(f"Full reports available in: {backtest_agent.output_dir}/backtest_results/")
+#         logger.info("Backtesting completed successfully")
+#         logger.info(f"Full reports available in: {backtest_agent.output_dir}/backtest_results/")
 
-    except Exception as e:
-        logger.error(f"Main execution failed: {str(e)}")
-        raise
+#     except Exception as e:
+#         logger.error(f"Main execution failed: {str(e)}")
+#         raise
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
 
