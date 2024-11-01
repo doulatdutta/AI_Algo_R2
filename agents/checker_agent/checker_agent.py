@@ -6,12 +6,15 @@ import traceback  # Add this for detailed error tracking
 from datetime import datetime
 from pathlib import Path
 
-# Modify the logging configuration
-logging.basicConfig(
-    level=logging.DEBUG,  # Change to DEBUG level for more detailed logs
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# # Modify the logging configuration
+# logging.basicConfig(
+#     level=logging.DEBUG,  # Change to DEBUG level for more detailed logs
+#     format='%(asctime)s - %(levelname)s - %(message)s'
+# )
+# logger = logging.getLogger(__name__)
+
+logger = logging.getLogger('CheckerAgent')
+logger.setLevel(logging.DEBUG)
 
 class CheckerAgent:
     def __init__(self, config_path='config/config.yaml'):
@@ -19,10 +22,46 @@ class CheckerAgent:
         try:
             self.base_path = self.get_base_path()
             logger.debug(f"Base path: {self.base_path}")
+            self.setup_logging()  # Add this line
             self.load_config(config_path)
             self.check_count = 0
         except Exception as e:
             logger.error(f"Initialization failed: {str(e)}\n{traceback.format_exc()}")
+            raise
+
+
+    def setup_logging(self):
+        """Set up logging configuration."""
+        try:
+            # Create logs directory if it doesn't exist
+            log_dir = self.base_path / 'output' / 'logs'
+            log_dir.mkdir(parents=True, exist_ok=True)
+
+            # Create file handler
+            log_file = log_dir / 'checker_agent.log'
+            file_handler = logging.FileHandler(log_file)
+            file_handler.setLevel(logging.DEBUG)
+
+            # Create console handler
+            console_handler = logging.StreamHandler()
+            console_handler.setLevel(logging.INFO)
+
+            # Create formatter
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            file_handler.setFormatter(formatter)
+            console_handler.setFormatter(formatter)
+
+            # Remove any existing handlers to avoid duplicates
+            logger.handlers.clear()
+
+            # Add handlers to logger
+            logger.addHandler(file_handler)
+            logger.addHandler(console_handler)
+
+            logger.debug("Logging setup completed")
+
+        except Exception as e:
+            print(f"Error setting up logging: {str(e)}\n{traceback.format_exc()}")
             raise
 
     def get_base_path(self):
