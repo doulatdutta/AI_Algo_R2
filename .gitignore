@@ -19,6 +19,14 @@ model
 agents\backtesting_agent\backtesting_agent_W.py
 agents\backtesting_agent\backtesting_agent_pine.py
 agents\backtesting_agent\technical_indicators.py
+agents\algo_agent\algo_agent_J.py
+agents\algo_agent\algo_agent_p.py
+agents\automated_feedback\automated_feedback_w.py
+agents\manager_agent\manager_agent_w.py
+.gitignore
+config\AlgoScalping_Strategy.txt
+config\All Rounder EA.txt
+config\Xauusd 5 Min.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
