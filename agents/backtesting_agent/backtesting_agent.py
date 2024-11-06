@@ -69,9 +69,12 @@ class JSONStrategy(Strategy):
     """Strategy implementation based on JSON configuration"""
     
     def init(self):
-        """Initialize strategy with indicators from JSON config"""
+        """Initialize strategy with debug logging"""
         if not hasattr(self, 'json_config'):
             raise ValueError("Strategy configuration not provided")
+        
+        logger.info("Initializing strategy...")
+        logger.info(f"Strategy config: {json.dumps(self.json_config, indent=2)}")
         
         self.indicators = {}
         self.trades_log = []
@@ -80,6 +83,14 @@ class JSONStrategy(Strategy):
         # Initialize indicators
         for indicator in self.json_config['indicators']:
             self.initialize_indicator(indicator)
+        
+        # Log initialized indicators
+        logger.info("Initialized indicators:")
+        for name, indicator in self.indicators.items():
+            if isinstance(indicator, tuple):
+                logger.info(f"{name}: tuple of length {len(indicator)}")
+            else:
+                logger.info(f"{name}: array of shape {np.array(indicator).shape}")
         
         # Set trading hours
         self.trading_hours = self.json_config.get('trading_hours', {
@@ -91,6 +102,7 @@ class JSONStrategy(Strategy):
         self.current_position = 0
         self.entry_price = 0
         self.entry_time = None
+
 
     def initialize_indicator(self, indicator_config: Dict):
         """Initialize technical indicators"""
@@ -170,71 +182,122 @@ class JSONStrategy(Strategy):
         return start_time <= current_time <= end_time
 
     def check_conditions(self, conditions: List[Dict]) -> bool:
-        """Evaluate trading conditions"""
-        for condition in conditions:
-            ind1 = self.indicators[condition['indicator1']]
-            ind2 = self.indicators[condition['indicator2']]
+        """Evaluate trading conditions with proper crossing detection and array validation"""
+        try:
+            for condition in conditions:
+                ind1 = self.indicators.get(condition['indicator1'])
+                ind2 = self.indicators.get(condition['indicator2'])
+                
+                # Validate indicators exist
+                if ind1 is None or ind2 is None:
+                    logger.warning(f"Missing indicators: {condition['indicator1']} or {condition['indicator2']}")
+                    continue
+
+                # Convert indicators to numpy arrays for consistent handling
+                ind1_values = np.array(ind1)
+                ind2_values = np.array(ind2)
+                
+                # Handle tuple indicators (e.g., MACD returns multiple values)
+                if isinstance(ind1, tuple):
+                    ind1_values = np.array(ind1[0])
+                if isinstance(ind2, tuple):
+                    ind2_values = np.array(ind2[0])
+                
+                # Ensure we have enough valid data points
+                if len(ind1_values) < 2 or len(ind2_values) < 2:
+                    logger.warning(f"Not enough data points for indicators")
+                    continue
+                    
+                # Get the last two values for comparison
+                ind1_prev, ind1_curr = ind1_values[-2], ind1_values[-1]
+                ind2_prev, ind2_curr = ind2_values[-2], ind2_values[-1]
+                
+                # Skip if any value is NaN
+                if np.isnan([ind1_prev, ind1_curr, ind2_prev, ind2_curr]).any():
+                    continue
+                    
+                if condition['condition'] == 'crossover':
+                    # Check if ind1 crosses above ind2
+                    if ind1_prev <= ind2_prev and ind1_curr > ind2_curr:
+                        logger.info(f"Crossover detected: {condition['indicator1']} crossed above {condition['indicator2']}")
+                        logger.info(f"Values: {ind1_prev:.2f}->{ind1_curr:.2f} crossed {ind2_prev:.2f}->{ind2_curr:.2f}")
+                        return True
+                        
+                elif condition['condition'] == 'crossunder':
+                    # Check if ind1 crosses below ind2
+                    if ind1_prev >= ind2_prev and ind1_curr < ind2_curr:
+                        logger.info(f"Crossunder detected: {condition['indicator1']} crossed below {condition['indicator2']}")
+                        logger.info(f"Values: {ind1_prev:.2f}->{ind1_curr:.2f} crossed {ind2_prev:.2f}->{ind2_curr:.2f}")
+                        return True
+                        
+        except Exception as e:
+            logger.error(f"Error checking conditions: {str(e)}")
+            return False
             
-            if condition['condition'] == 'crossover':
-                if isinstance(ind1, tuple):
-                    ind1 = ind1[0]
-                if isinstance(ind2, tuple):
-                    ind2 = ind2[0]
-                    
-                if ind1[-2] <= ind2[-2] and ind1[-1] > ind2[-1]:
-                    return True
-                    
-            elif condition['condition'] == 'crossunder':
-                if isinstance(ind1, tuple):
-                    ind1 = ind1[0]
-                if isinstance(ind2, tuple):
-                    ind2 = ind2[0]
-                    
-                if ind1[-2] >= ind2[-2] and ind1[-1] < ind2[-1]:
-                    return True
-        
         return False
 
     def next(self):
-        """Execute trading logic"""
-        if not self.is_trading_hours():
-            return
+        """Execute trading logic with enhanced logging"""
+        try:
+            current_time = self.data.index[-1]
             
-        # Check entry conditions
-        if self.current_position == 0:
-            # Check long entry
-            if self.check_conditions(self.json_config['entry_conditions']):
-                size = self.json_config['entry_conditions'][0].get('size', 1.0)
-                self.buy(size=size * self.equity)
-                self.current_position = 1
-                self.entry_price = self.data.Close[-1]
-                self.entry_time = self.data.index[-1]
-                self.log_trade('BUY', size)
-                
-            # Check short entry
-            elif self.check_conditions(self.json_config['short_conditions']):
-                size = self.json_config['short_conditions'][0].get('size', 1.0)
-                self.sell(size=size * self.equity)
-                self.current_position = -1
-                self.entry_price = self.data.Close[-1]
-                self.entry_time = self.data.index[-1]
-                self.log_trade('SELL', size)
-        
-        # Check exit conditions
-        elif self.current_position > 0:
-            if self.check_conditions(self.json_config['exit_conditions']):
-                self.position.close()
-                self.log_trade('CLOSE_LONG', self.position.size)
-                self.current_position = 0
-                
-        elif self.current_position < 0:
-            if self.check_conditions(self.json_config['short_exit_conditions']):
-                self.position.close()
-                self.log_trade('CLOSE_SHORT', self.position.size)
-                self.current_position = 0
+            if not self.is_trading_hours():
+                return
+            
+            # Log indicator values for debugging
+            logger.debug(f"\nTime: {current_time}")
+            for name, indicator in self.indicators.items():
+                if isinstance(indicator, tuple):
+                    logger.debug(f"{name}: {indicator[0][-1]:.2f}")
+                else:
+                    logger.debug(f"{name}: {indicator[-1]:.2f}")
+            
+            # Check entry conditions
+            if self.current_position == 0:
+                if self.check_conditions(self.json_config['entry_conditions']):
+                    size = self.json_config['entry_conditions'][0].get('size', 0.95)
+                    price = self.data.Close[-1]
+                    position_size = (self.equity * size) / price
+                    logger.info(f"Long entry signal at {current_time}")
+                    logger.info(f"Price: {price:.2f}, Size: {position_size:.2f}, Equity: {self.equity:.2f}")
+                    self.buy(size=position_size)
+                    self.current_position = 1
+                    self.entry_price = price
+                    self.entry_time = current_time
+                    self.log_trade('BUY', position_size)
+                    
+                elif self.check_conditions(self.json_config['short_conditions']):
+                    size = self.json_config['short_conditions'][0].get('size', 0.95)
+                    price = self.data.Close[-1]
+                    position_size = (self.equity * size) / price
+                    logger.info(f"Short entry signal at {current_time}")
+                    logger.info(f"Price: {price:.2f}, Size: {position_size:.2f}, Equity: {self.equity:.2f}")
+                    self.sell(size=position_size)
+                    self.current_position = -1
+                    self.entry_price = price
+                    self.entry_time = current_time
+                    self.log_trade('SELL', position_size)
+            
+            # Check exit conditions
+            elif self.current_position > 0:
+                if self.check_conditions(self.json_config['exit_conditions']):
+                    logger.info(f"Long exit signal at {current_time}")
+                    self.position.close()
+                    self.log_trade('CLOSE_LONG', self.position.size)
+                    self.current_position = 0
+                    
+            elif self.current_position < 0:
+                if self.check_conditions(self.json_config['short_exit_conditions']):
+                    logger.info(f"Short exit signal at {current_time}")
+                    self.position.close()
+                    self.log_trade('CLOSE_SHORT', self.position.size)
+                    self.current_position = 0
+                    
+        except Exception as e:
+            logger.error(f"Error in next(): {str(e)}")
 
     def log_trade(self, action: str, size: float):
-        """Log trade details"""
+        """Enhanced trade logging"""
         trade = {
             'time': self.data.index[-1],
             'action': action,
@@ -244,6 +307,9 @@ class JSONStrategy(Strategy):
             'pnl': self.position.pnl if self.position else 0
         }
         self.trades_log.append(trade)
+        
+        # Debug logging
+        logger.info(f"Trade executed: {action} | Price: {trade['price']} | Size: {size} | Equity: {trade['equity']}")
 
 class BacktestingAgent:
     """Main backtesting agent class"""
@@ -256,27 +322,12 @@ class BacktestingAgent:
         self.technical_indicators = {}
 
 
-
-    def validate_strategy(self, strategy: Dict) -> Dict:
+    def validate_strategy(self, strategy: Dict, company_name: str) -> Dict:
         """Enhanced strategy validation to handle algo_agent.py format"""
         try:
-            # Convert moving_averages to indicators format
-            if 'moving_averages' in strategy:
-                indicators = []
-                for ma in strategy['moving_averages']:
-                    indicator = {
-                        'type': ma['type'],
-                        'name': ma['name'],
-                        'params': {
-                            'length': ma['length'],
-                            'offset': ma.get('offset', 0.85),
-                            'sigma': ma.get('sigma', 5.0),
-                            'source': ma['source']
-                        }
-                    }
-                    indicators.append(indicator)
-                strategy['indicators'] = indicators
-                del strategy['moving_averages']
+            # Initialize default strategy if None provided
+            if not strategy:
+                return self.get_default_strategy(company_name)
 
             # Ensure all required fields exist
             required_fields = [
@@ -284,78 +335,248 @@ class BacktestingAgent:
                 'trading_hours', 'initial_capital', 'commission'
             ]
             
+            # Check and set defaults for missing fields
             for field in required_fields:
                 if field not in strategy:
                     logger.warning(f"Missing {field} in strategy, using default")
-                    if field == 'indicators':
-                        strategy[field] = self.get_default_strategy('')[field]
-                    else:
-                        strategy[field] = self.get_default_strategy('')[field]
+                    strategy[field] = self.get_default_strategy(company_name)[field]
 
-            # Validate indicator references
-            indicator_names = [ind['name'] for ind in strategy['indicators']]
-            
-            self._validate_conditions(strategy['entry_conditions'], indicator_names)
-            self._validate_conditions(strategy['exit_conditions'], indicator_names)
+            # Create a mapping of indicator names
+            indicator_names = set()
+            for ind in strategy['indicators']:
+                if 'name' not in ind:
+                    ind['name'] = f"{ind['type'].lower()}_{len(indicator_names)}"
+                indicator_names.add(ind['name'])
+
+            # Handle moving_averages conversion
+            if 'moving_averages' in strategy:
+                for ma in strategy['moving_averages']:
+                    indicator = {
+                        'type': ma['type'],
+                        'name': ma.get('name', f"{ma['type'].lower()}_{len(indicator_names)}"),
+                        'params': {
+                            'length': ma['length'],
+                            'offset': ma.get('offset', 0.85),
+                            'sigma': ma.get('sigma', 5.0),
+                            'source': ma.get('source', 'Close')
+                        }
+                    }
+                    strategy['indicators'].append(indicator)
+                    indicator_names.add(indicator['name'])
+                del strategy['moving_averages']
+
+            # Validate conditions against available indicators
+            def validate_conditions_list(conditions: List[Dict]) -> List[Dict]:
+                valid_conditions = []
+                for condition in conditions:
+                    ind1 = condition.get('indicator1')
+                    ind2 = condition.get('indicator2')
+                    
+                    if ind1 not in indicator_names:
+                        logger.warning(f"Indicator {ind1} not found in available indicators")
+                        continue
+                        
+                    if ind2 not in indicator_names:
+                        logger.warning(f"Indicator {ind2} not found in available indicators")
+                        continue
+                    
+                    valid_conditions.append(condition)
+                return valid_conditions
+
+            # Validate all condition types
+            strategy['entry_conditions'] = validate_conditions_list(strategy['entry_conditions'])
+            strategy['exit_conditions'] = validate_conditions_list(strategy['exit_conditions'])
             
             if 'short_conditions' in strategy:
-                self._validate_conditions(strategy['short_conditions'], indicator_names)
+                strategy['short_conditions'] = validate_conditions_list(strategy['short_conditions'])
             if 'short_exit_conditions' in strategy:
-                self._validate_conditions(strategy['short_exit_conditions'], indicator_names)
+                strategy['short_exit_conditions'] = validate_conditions_list(strategy['short_exit_conditions'])
+
+            # Check if we have valid conditions, if not use defaults
+            if not strategy['entry_conditions']:
+                logger.warning("No valid entry conditions found, using defaults")
+                strategy['entry_conditions'] = self.get_default_strategy(company_name)['entry_conditions']
+                
+            if not strategy['exit_conditions']:
+                logger.warning("No valid exit conditions found, using defaults")
+                strategy['exit_conditions'] = self.get_default_strategy(company_name)['exit_conditions']
+
+            # Validate trading hours format
+            try:
+                datetime.strptime(strategy['trading_hours']['start'], '%H:%M')
+                datetime.strptime(strategy['trading_hours']['end'], '%H:%M')
+            except (ValueError, KeyError):
+                logger.warning("Invalid trading hours format, using defaults")
+                strategy['trading_hours'] = self.get_default_strategy(company_name)['trading_hours']
+
+            # Validate numeric parameters
+            try:
+                strategy['initial_capital'] = float(strategy['initial_capital'])
+                strategy['commission'] = float(strategy['commission'])
+            except (ValueError, TypeError):
+                logger.warning("Invalid numeric parameters, using defaults")
+                default_strategy = self.get_default_strategy(company_name)
+                strategy['initial_capital'] = default_strategy['initial_capital']
+                strategy['commission'] = default_strategy['commission']
 
             return strategy
             
         except Exception as e:
-            logger.error(f"Strategy validation failed: {e}")
-            return self.get_default_strategy('')
+            logger.error(f"Strategy validation failed: {str(e)}")
+            logger.debug("Exception details:", exc_info=True)
+            return self.get_default_strategy(company_name)
 
-    def _validate_conditions(self, conditions: List[Dict], indicator_names: List[str]) -> None:
-        """Validate trading conditions against available indicators"""
-        for condition in conditions:
-            if condition['indicator1'] not in indicator_names:
-                raise ValueError(f"Indicator {condition['indicator1']} not found in strategy")
-            if condition['indicator2'] not in indicator_names:
-                raise ValueError(f"Indicator {condition['indicator2']} not found in strategy")
+
 
     def initialize_indicator(self, indicator_config: Dict):
-        """Enhanced indicator initialization to handle ALMA and other types"""
+        """Initialize technical indicators with comprehensive validation and error handling"""
         try:
             indicator_type = indicator_config['type'].lower()
             params = indicator_config.get('params', {})
             name = indicator_config['name']
             
-            # Check if indicator is pre-calculated
-            if name in self.technical_indicators:
-                self.indicators[name] = self.technical_indicators[name]
-                return
+            logger.info(f"Initializing indicator: {name} (Type: {indicator_type})")
             
-            # Get price data
+            # Get price data and validate
             close = self.data.Close
             high = self.data.High
             low = self.data.Low
             volume = self.data.Volume
             
-            # Extended indicator mapping
-            indicators = {
-                'sma': lambda: self.I(talib.SMA, close, timeperiod=params.get('length', 20)),
-                'ema': lambda: self.I(talib.EMA, close, timeperiod=params.get('length', 20)),
-                'alma': lambda: self.initialize_alma(params),
-                'rsi': lambda: self.I(talib.RSI, close, timeperiod=params.get('length', 14)),
-                'macd': lambda: self.initialize_macd(params),
-                'bbands': lambda: self.initialize_bbands(params),
-                'vwap': lambda: self.I(TechnicalIndicators.calculate_vwap, high, low, close, volume),
-                'supertrend': lambda: self.initialize_supertrend(params),
-                'obv': lambda: self.I(talib.OBV, close, volume)
+            # Basic data validation
+            if len(close) == 0 or len(high) == 0 or len(low) == 0 or len(volume) == 0:
+                raise ValueError("Missing required price data")
+                
+            # Handle pre-calculated indicators from CSV
+            if name in self.technical_indicators:
+                logger.info(f"Using pre-calculated values for {name}")
+                self.indicators[name] = self.technical_indicators[name]
+                return
+
+            # Define all supported indicators
+            indicator_functions = {
+                'sma': lambda: self.I(talib.SMA, close, 
+                                    timeperiod=params.get('length', 20)),
+                
+                'ema': lambda: self.I(talib.EMA, close, 
+                                    timeperiod=params.get('length', 20)),
+                
+                'rsi': lambda: self.I(talib.RSI, close, 
+                                    timeperiod=params.get('length', 14)),
+                
+                'macd': lambda: talib.MACD(
+                    close,
+                    fastperiod=params.get('fast_length', 12),
+                    slowperiod=params.get('slow_length', 26),
+                    signalperiod=params.get('signal_length', 9)
+                ),
+                
+                'bbands': lambda: talib.BBANDS(
+                    close,
+                    timeperiod=params.get('length', 20),
+                    nbdevup=params.get('mult', 2),
+                    nbdevdn=params.get('mult', 2)
+                ),
+                
+                'vwap': lambda: self.I(TechnicalIndicators.calculate_vwap, 
+                                    high, low, close, volume),
+                
+                'supertrend': lambda: TechnicalIndicators.calculate_supertrend(
+                    high, low, close,
+                    period=params.get('period', 10),
+                    multiplier=params.get('multiplier', 3.0)
+                ),
+                
+                'obv': lambda: self.I(talib.OBV, close, volume),
+                
+                'atr': lambda: self.I(talib.ATR, high, low, close,
+                                    timeperiod=params.get('length', 14)),
+                
+                'stoch': lambda: talib.STOCH(
+                    high, low, close,
+                    fastk_period=params.get('k_period', 14),
+                    slowk_period=params.get('k_smooth', 3),
+                    slowk_matype=0,
+                    slowd_period=params.get('d_period', 3),
+                    slowd_matype=0
+                ),
+                
+                'adx': lambda: self.I(talib.ADX, high, low, close,
+                                    timeperiod=params.get('length', 14)),
+                
+                'cci': lambda: self.I(talib.CCI, high, low, close,
+                                    timeperiod=params.get('length', 14)),
+                
+                'roc': lambda: self.I(talib.ROC, close,
+                                    timeperiod=params.get('length', 10)),
+                
+                'mom': lambda: self.I(talib.MOM, close,
+                                    timeperiod=params.get('length', 10)),
+                
+                # Price references
+                'close': lambda: close,
+                'high': lambda: high,
+                'low': lambda: low,
+                'volume': lambda: volume,
             }
             
-            if indicator_type in indicators:
-                self.indicators[name] = indicators[indicator_type]()
+            # Calculate indicator
+            if indicator_type in indicator_functions:
+                try:
+                    indicator_value = indicator_functions[indicator_type]()
+                    
+                    # Validate indicator values
+                    if indicator_value is not None:
+                        # Handle tuple indicators (like MACD, Bollinger Bands)
+                        if isinstance(indicator_value, tuple):
+                            # Validate each component
+                            for i, component in enumerate(indicator_value):
+                                if not isinstance(component, np.ndarray):
+                                    component = np.array(component)
+                                if np.all(np.isnan(component)):
+                                    raise ValueError(f"All values are NaN for {name} component {i}")
+                                logger.debug(f"{name} component {i} range: {np.nanmin(component):.2f} to {np.nanmax(component):.2f}")
+                        else:
+                            # Single array indicator
+                            if not isinstance(indicator_value, np.ndarray):
+                                indicator_value = np.array(indicator_value)
+                            if np.all(np.isnan(indicator_value)):
+                                raise ValueError(f"All values are NaN for {name}")
+                            logger.debug(f"{name} range: {np.nanmin(indicator_value):.2f} to {np.nanmax(indicator_value):.2f}")
+                        
+                        # Store the indicator
+                        self.indicators[name] = indicator_value
+                        logger.info(f"Successfully initialized {name} indicator")
+                        
+                        # Log some statistics about the indicator
+                        if isinstance(indicator_value, tuple):
+                            logger.info(f"{name} initialized as tuple with {len(indicator_value)} components")
+                        else:
+                            non_nan = np.count_nonzero(~np.isnan(indicator_value))
+                            logger.info(f"{name} initialized with {non_nan} valid values out of {len(indicator_value)}")
+                    else:
+                        raise ValueError(f"Indicator calculation returned None for {name}")
+                        
+                except Exception as e:
+                    logger.error(f"Error calculating {name}: {str(e)}")
+                    raise
             else:
-                logger.warning(f"Unsupported indicator: {indicator_type}")
+                logger.warning(f"Unsupported indicator type: {indicator_type}")
+                logger.info(f"Using price series as fallback for {name}")
+                self.indicators[name] = close
                 
         except Exception as e:
-            logger.error(f"Error initializing indicator {indicator_config['type']}: {e}")
-            raise
+            logger.error(f"Error initializing indicator {name}: {str(e)}")
+            # Instead of raising, we'll use price series as fallback
+            logger.warning(f"Using price series as fallback for {name}")
+            self.indicators[name] = self.data.Close
+            
+        finally:
+            # Verify indicator was stored
+            if name not in self.indicators:
+                logger.error(f"Failed to initialize {name}, using price series as fallback")
+                self.indicators[name] = self.data.Close
+
 
     def initialize_alma(self, params: Dict) -> np.ndarray:
         """Initialize ALMA (Arnaud Legoux Moving Average) indicator"""
@@ -913,7 +1134,7 @@ class BacktestingAgent:
         return periods
 
     def generate_trade_analysis(self, stats: Dict, report_dir: Path):
-        """Generate detailed trade analysis"""
+        """Generate detailed trade analysis with proper error handling"""
         try:
             # Extract trade data from stats
             trades = stats.get('_trades', [])
@@ -922,44 +1143,55 @@ class BacktestingAgent:
                 return
                 
             # Create DataFrame with relevant trade information
-            trades_df = pd.DataFrame({
-                'Entry Time': [t.entry_time for t in trades],
-                'Exit Time': [t.exit_time for t in trades],
-                'Size': [t.size for t in trades],
-                'Entry Price': [t.entry_price for t in trades],
-                'Exit Price': [t.exit_price for t in trades],
-                'PnL': [t.pl for t in trades],
-                'Return': [t.pl_pct for t in trades],
-                'Duration': [(t.exit_time - t.entry_time).total_seconds() / 3600 for t in trades],
-                'Type': ['Long' if t.size > 0 else 'Short' for t in trades]
-            })
+            trades_df = pd.DataFrame([
+                {
+                    'Entry Time': t.entry_time,
+                    'Exit Time': t.exit_time,
+                    'Size': t.size,
+                    'Entry Price': t.entry_price,
+                    'Exit Price': t.exit_price,
+                    'PnL': t.pl,
+                    'Return': t.pl_pct,
+                    'Duration': (t.exit_time - t.entry_time).total_seconds() / 3600,
+                    'Type': 'Long' if t.size > 0 else 'Short'
+                }
+                for t in trades if hasattr(t, 'entry_time') and hasattr(t, 'exit_time')
+            ])
             
+            if trades_df.empty:
+                logger.warning("No valid trades for analysis")
+                return
+                
             # Generate trade analysis plots
             fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 15))
             
             # Plot 1: PnL Distribution
-            sns.histplot(data=trades_df['PnL'], ax=ax1, bins=50)
-            ax1.set_title('Trade PnL Distribution')
-            ax1.set_xlabel('PnL ($)')
+            if not trades_df['PnL'].empty and trades_df['PnL'].notna().any():
+                sns.histplot(data=trades_df['PnL'], ax=ax1, bins=50)
+                ax1.set_title('Trade PnL Distribution')
+                ax1.set_xlabel('PnL ($)')
             
             # Plot 2: Return vs Duration
-            ax2.scatter(trades_df['Duration'], trades_df['Return'])
-            ax2.set_title('Trade Return vs Duration')
-            ax2.set_xlabel('Duration (hours)')
-            ax2.set_ylabel('Return (%)')
+            if not trades_df['Duration'].empty and not trades_df['Return'].empty:
+                ax2.scatter(trades_df['Duration'], trades_df['Return'])
+                ax2.set_title('Trade Return vs Duration')
+                ax2.set_xlabel('Duration (hours)')
+                ax2.set_ylabel('Return (%)')
             
             # Plot 3: Cumulative PnL
-            trades_df['Cumulative PnL'] = trades_df['PnL'].cumsum()
-            ax3.plot(trades_df.index, trades_df['Cumulative PnL'])
-            ax3.set_title('Cumulative PnL')
-            ax3.set_xlabel('Trade Number')
-            ax3.set_ylabel('Cumulative PnL ($)')
+            if not trades_df['PnL'].empty:
+                trades_df['Cumulative PnL'] = trades_df['PnL'].cumsum()
+                ax3.plot(range(len(trades_df)), trades_df['Cumulative PnL'])
+                ax3.set_title('Cumulative PnL')
+                ax3.set_xlabel('Trade Number')
+                ax3.set_ylabel('Cumulative PnL ($)')
             
             # Plot 4: Returns by Trade Type
-            sns.boxplot(data=trades_df, x='Type', y='Return', ax=ax4)
-            ax4.set_title('Returns by Trade Type')
-            ax4.set_xlabel('Trade Type')
-            ax4.set_ylabel('Return (%)')
+            if not trades_df['Return'].empty and not trades_df['Type'].empty:
+                sns.boxplot(data=trades_df, x='Type', y='Return', ax=ax4)
+                ax4.set_title('Returns by Trade Type')
+                ax4.set_xlabel('Trade Type')
+                ax4.set_ylabel('Return (%)')
             
             plt.tight_layout()
             plt.savefig(report_dir / 'trade_analysis.png')
@@ -978,7 +1210,7 @@ class BacktestingAgent:
                 'Max PnL': trades_df['PnL'].max(),
                 'Min PnL': trades_df['PnL'].min(),
                 'Average Duration': trades_df['Duration'].mean(),
-                'Win Rate': (trades_df['PnL'] > 0).mean() * 100
+                'Win Rate': (trades_df['PnL'] > 0).mean() * 100 if len(trades_df) > 0 else 0
             }
             
             # Save summary statistics
@@ -986,11 +1218,14 @@ class BacktestingAgent:
                 f.write("Trade Summary Statistics\n")
                 f.write("=" * 50 + "\n\n")
                 for key, value in summary_stats.items():
-                    f.write(f"{key}: {value:.2f}\n")
-                
+                    if isinstance(value, float):
+                        f.write(f"{key}: {value:.2f}\n")
+                    else:
+                        f.write(f"{key}: {value}\n")
+                        
         except Exception as e:
-            logger.error(f"Error generating trade analysis: {e}")
-            logger.info("Skipping trade analysis due to error")
+            logger.error(f"Error generating trade analysis: {str(e)}")
+            logger.debug("Exception details:", exc_info=True)
 
     def plot_monthly_returns(self, stats: Dict, report_dir: Path):
         """Generate monthly returns heatmap"""
@@ -1102,59 +1337,59 @@ class BacktestingAgent:
 
 
 
-# Example usage
+# # ###Example usage
 
 
-# def main():
-#     """Example usage of backtesting agent with specified company."""
-#     try:
-#         # Configure logging
-#         logging.basicConfig(
-#             level=logging.INFO,
-#             format='%(asctime)s - %(levelname)s - %(message)s'
-#         )
-#         logger.info("Starting backtesting agent")
+def main():
+    """Example usage of backtesting agent with specified company."""
+    try:
+        # Configure logging
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(levelname)s - %(message)s'
+        )
+        logger.info("Starting backtesting agent")
         
-#         # Initialize backtesting agent
-#         backtest_agent = BacktestingAgent()
+        # Initialize backtesting agent
+        backtest_agent = BacktestingAgent()
         
-#         # Specify company name here
-#         company_name = "ZOMATO"  # <-- Change this to test different companies
+        # Specify company name here
+        company_name = "ZOMATO"  # <-- Change this to test different companies
         
-#         # Log strategy loading
-#         logger.info(f"Loading strategy for {company_name}")
+        # Log strategy loading
+        logger.info(f"Loading strategy for {company_name}")
         
-#         # Run backtest
-#         stats = backtest_agent.run_backtest(
-#             company_name=company_name,
-#             start_date="2024-01-01 00:00:00",
-#             end_date="2024-10-31 23:59:59"
-#         )
+        # Run backtest
+        stats = backtest_agent.run_backtest(
+            company_name=company_name,
+            start_date="2024-01-01 00:00:00",
+            end_date="2024-10-31 23:59:59"
+        )
         
-#         # Print comprehensive results
-#         print("\nBacktest Results Summary")
-#         print("=" * 50)
-#         print(f"Company: {company_name}")
-#         print(f"\nPerformance Metrics:")
-#         print(f"Total Return: {stats['Return [%]']:.2f}%")
-#         print(f"Annual Return: {stats['Return (Ann.) [%]']:.2f}%")
-#         print(f"Sharpe Ratio: {stats['Sharpe Ratio']:.2f}")
-#         print(f"Max Drawdown: {stats['Max. Drawdown [%]']:.2f}%")
-#         print(f"Win Rate: {stats['Win Rate [%]']:.2f}%")
-#         print(f"Total Trades: {stats['# Trades']}")
+        # Print comprehensive results
+        print("\nBacktest Results Summary")
+        print("=" * 50)
+        print(f"Company: {company_name}")
+        print(f"\nPerformance Metrics:")
+        print(f"Total Return: {stats['Return [%]']:.2f}%")
+        print(f"Annual Return: {stats['Return (Ann.) [%]']:.2f}%")
+        print(f"Sharpe Ratio: {stats['Sharpe Ratio']:.2f}")
+        print(f"Max Drawdown: {stats['Max. Drawdown [%]']:.2f}%")
+        print(f"Win Rate: {stats['Win Rate [%]']:.2f}%")
+        print(f"Total Trades: {stats['# Trades']}")
         
-#         print(f"\nRisk Metrics:")
-#         print(f"Volatility (Ann.): {stats['Volatility (Ann.) [%]']:.2f}%")
-#         print(f"Sortino Ratio: {stats['Sortino Ratio']:.2f}")
-#         print(f"Calmar Ratio: {stats['Calmar Ratio']:.2f}")
+        print(f"\nRisk Metrics:")
+        print(f"Volatility (Ann.): {stats['Volatility (Ann.) [%]']:.2f}%")
+        print(f"Sortino Ratio: {stats['Sortino Ratio']:.2f}")
+        print(f"Calmar Ratio: {stats['Calmar Ratio']:.2f}")
         
-#         logger.info("Backtesting completed successfully")
-#         logger.info(f"Full reports available in: {backtest_agent.output_dir}/backtest_results/")
+        logger.info("Backtesting completed successfully")
+        logger.info(f"Full reports available in: {backtest_agent.output_dir}/backtest_results/")
 
-#     except Exception as e:
-#         logger.error(f"Main execution failed: {str(e)}")
-#         raise
+    except Exception as e:
+        logger.error(f"Main execution failed: {str(e)}")
+        raise
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
 

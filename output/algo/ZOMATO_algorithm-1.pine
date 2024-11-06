@@ -1,0 +1,35 @@
+//@version=5
+    strategy("ZOMATO Strategy", 
+        overlay=true, 
+        initial_capital=100000, 
+        commission_type=strategy.commission.percent,
+        commission_value=0.002,
+        default_qty_type=strategy.percent_of_equity)
+
+    // Trading Hours
+    var start_time = timestamp("09:15")
+    var end_time = timestamp("15:20")
+    is_trading_time = time >= start_time and time <= end_time
+
+    // Technical Indicators
+    rsi = ta.rsi(close, 14)
+    [bb_upper, bb_middle, bb_lower] = ta.bb(close, 20, 2)
+    adx = ta.adx(14)
+    sma20 = ta.sma(close, 20)
+    ema50 = ta.ema(close, 50)
+
+    // Moving Averages
+    close_ma = ta.alma(close, 2, 0.85, 5.0)
+    open_ma = ta.alma(open, 2, 0.85, 5.0)
+
+// Entry Conditions
+    if (ta.crossover(close_ma, open_ma) and is_trading_time)
+        strategy.entry("buy", strategy.buy, qty=strategy.equity * 0.99)
+    if (ta.crossunder(close_ma, open_ma) and is_trading_time)
+        strategy.entry("sell", strategy.sell, qty=strategy.equity * 0.99)
+
+// Exit Conditions
+    if (ta.crossunder(close_ma, open_ma) and is_trading_time)
+        strategy.exit_long()
+    if (ta.crossover(close_ma, open_ma) and is_trading_time)
+        strategy.exit_short()

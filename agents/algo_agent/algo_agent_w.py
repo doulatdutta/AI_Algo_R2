@@ -669,7 +669,6 @@ class AlgoAgent:
             - initial_capital (default 100000)
             - commission (default 0.002)
             - trading_hours (example:- start: "09:15", end: "15:20")
-            - Timing will be For indian stock market.(Minimum start: "09:15", Maximum end: "15:20") 
             - entry_conditions (array)
             - exit_conditions (array)
             - risk_management settings

@@ -1,0 +1,182 @@
+{
+    "strategy_name": "ZOMATO Trading Strategy",
+    "generation_date": "2024-11-06T23:56:49.321436",
+    "market_analysis": {
+        "trend": "bearish",
+        "strength": 0,
+        "volatility": 0.0006849056352387929
+    },
+    "risk_metrics": {
+        "volatility": 0.0006849056352387929,
+        "var_95": 0.0017356269652158967,
+        "sharpe_ratio": -2.2771081760439817,
+        "max_drawdown": 0.15739298746393593
+    },
+    "strategy_rules": {
+        "initial_capital": 100000,
+        "commission": 0.002,
+        "entry_conditions": [],
+        "exit_conditions": [],
+        "trading_hours": {
+            "start": "09:15",
+            "end": "15:20"
+        },
+        "risk_management": {
+            "max_position_size": 0.1,
+            "stop_loss": 0.02,
+            "take_profit": 0.03
+        },
+        "generated_at": "2024-11-06T23:56:49.320436",
+        "company": "ZOMATO",
+        "api_provider": "ollama",
+        "model": "qwen2.5:1.5b"
+    },
+    "recommendations": {
+        "entry_strategy": [
+            {
+                "type": "entry",
+                "action": "Short",
+                "confidence": 0,
+                "conditions": [
+                    "Wait for rallies to resistance levels",
+                    "Confirm with volume increase",
+                    "Check RSI for overbought conditions"
+                ]
+            }
+        ],
+        "exit_strategy": [
+            "Tighter stops can be used",
+            "Consider full position exits",
+            "Use fixed take-profit levels"
+        ],
+        "risk_management": [],
+        "timeframe_analysis": []
+    },
+    "performance_metrics": {
+        "expected_sharpe": -2.2771081760439817,
+        "max_drawdown": 0.15739298746393593,
+        "var_95": 0.0017356269652158967
+    },
+    "trading_parameters": {
+        "position_sizing": {
+            "base_size": 0.1,
+            "adjusted_size": 0.0,
+            "max_position": 0.0,
+            "scaling_rules": {
+                "scale_in_levels": [
+                    0.3,
+                    0.3,
+                    0.4
+                ],
+                "scale_out_levels": [
+                    0.4,
+                    0.3,
+                    0.3
+                ]
+            }
+        },
+        "stop_loss_levels": {
+            "initial_stop": 0,
+            "trailing_stop": 0,
+            "volatility_adjusted_stop": 0.0,
+            "time_based_stop": {
+                "bars": 5,
+                "condition": "No new high/low"
+            }
+        },
+        "take_profit_levels": {
+            "target_1": 0,
+            "target_2": 0,
+            "target_3": 0,
+            "trailing_profit": {
+                "activation": 0,
+                "trail_amount": 0
+            },
+            "adjust_factor": 0
+        }
+    },
+    "market_specific_rules": {
+        "trend_rules": [
+            {
+                "type": "entry",
+                "condition": "price_below_ema",
+                "timeframe": "1h",
+                "confidence": 0
+            },
+            {
+                "type": "confirmation",
+                "indicator": "MACD",
+                "condition": "negative_crossover"
+            }
+        ],
+        "volatility_rules": [
+            {
+                "type": "position_size",
+                "action": "increase",
+                "factor": 1.2
+            },
+            {
+                "type": "stop_loss",
+                "action": "tighten",
+                "factor": 0.8
+            }
+        ],
+        "pattern_rules": [
+            {
+                "type": "reversal",
+                "pattern": "double_bottom",
+                "action": "buy",
+                "confidence": 0.8
+            }
+        ],
+        "volume_rules": [
+            {
+                "type": "volume_confirmation",
+                "condition": "volume_above_average",
+                "lookback": 20,
+                "threshold": 1.5
+            }
+        ],
+        "timeframe_rules": [
+            {
+                "timeframe": "1h",
+                "type": "trend_alignment",
+                "condition": "bearish",
+                "confidence": 0
+            },
+            {
+                "timeframe": "4h",
+                "type": "trend_confirmation",
+                "weight": 0.6
+            }
+        ]
+    },
+    "pattern_analysis": {
+        "detected_patterns": {
+            "candlestick": {
+                "doji": 100,
+                "engulfing": 0,
+                "hammer": 0
+            },
+            "chart": {
+                "double_bottom": {
+                    "detected": true,
+                    "confidence": 0.8,
+                    "first_bottom": 243.75,
+                    "second_bottom": 243.0
+                },
+                "head_shoulders": {
+                    "detected": false,
+                    "confidence": 0,
+                    "left_shoulder": 248.75,
+                    "head": 245.3000030517578,
+                    "right_shoulder": 245.1499938964844
+                }
+            }
+        },
+        "pattern_reliability": {
+            "candlestick": 0.35,
+            "chart": 0.35
+        }
+    }
+}

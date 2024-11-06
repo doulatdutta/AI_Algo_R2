@@ -18,6 +18,11 @@ llama-cpp-python
 plotly
 seaborn
 
+
+ta-lib 
+openai 
+groq
+
 #  ollama pull llama3.2
 
 # for model
