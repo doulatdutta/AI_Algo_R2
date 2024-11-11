@@ -5,7 +5,7 @@ api_provider: "ollama"  # Options: "openai", "ollama", "groq"
 
 # Ollama Configuration
 ollama:  # Changed from 'Ollama' to 'ollama' for consistency
-  model: "qwen2.5:1.5b"  # Options: "algo_DD", "llama3.2", "qwen2.5:1.5b"
+  model: "llama3.2:1b"  # Options: "algo_DD", "llama3.2", "qwen2.5:1.5b","0xroyce/plutus", "llama3.2:1b"
 
 # OpenAI Configuration
 openai:  # Changed from 'OPENAI' to 'openai' for consistency
@@ -38,11 +38,12 @@ configuration:
 
 # Data_download.py Configuration
 
-historical_days: 90
+historical_days: 120
 chunk_size: 7
 data_interval: "1m"
 max_attempts: 12
 delay_between_attempts: 90
 delay_between_chunks: 65
+batch_delay: 180  # New parameter for delay between 30-day batches
 
 

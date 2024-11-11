@@ -1,60 +1,50 @@
 {
-    "initial_capital": 100000,
+    "initial_capital": 100000.0,
     "commission": 0.002,
-    "trading_hours": {
-        "start": "09:15",
-        "end": "15:20"
-    },
-    "moving_averages": [
-        {
-            "type": "ALMA",
-            "length": 2,
-            "offset": 0.85,
-            "sigma": 5.0,
-            "source": "Close",
-            "name": "close_ma"
-        },
-        {
-            "type": "ALMA",
-            "length": 2,
-            "offset": 0.85,
-            "sigma": 5.0,
-            "source": "Open",
-            "name": "open_ma"
-        }
-    ],
     "entry_conditions": [
         {
-            "indicator1": "close_ma",
-            "indicator2": "open_ma",
+            "indicator": "SMA",
             "condition": "crossover",
-            "action": "buy",
-            "size": 0.99
+            "value": 240.5,
+            "timeframe": "15m"
         },
         {
-            "indicator1": "close_ma",
-            "indicator2": "open_ma",
-            "condition": "crossunder",
-            "action": "sell",
-            "size": 0.99
+            "indicator": "RSI",
+            "condition": "above",
+            "value": 70.0,
+            "timeframe": "5m"
         }
     ],
     "exit_conditions": [
         {
-            "indicator1": "close_ma",
-            "indicator2": "open_ma",
-            "condition": "crossunder",
-            "action": "exit_long"
+            "indicator": "SMA",
+            "condition": "below",
+            "value": 230.0,
+            "timeframe": "15m"
         },
         {
-            "indicator1": "close_ma",
-            "indicator2": "open_ma",
-            "condition": "crossover",
-            "action": "exit_short"
+            "indicator": "WILLR",
+            "condition": "above",
+            "value": 0,
+            "timeframe": "30m"
         }
     ],
-    "generated_at": "2024-11-06T22:31:28.688617",
+    "trading_hours": {
+        "start": "09:15",
+        "end": "15:20"
+    },
+    "risk_management": {
+        "max_position_size": 0.1,
+        "stop_loss": 0.02,
+        "take_profit": 0.03
+    },
+    "generated_at": "2024-11-11T22:08:25.671893",
     "company": "ZOMATO",
     "api_provider": "ollama",
-    "model": "qwen2.5:1.5b"
+    "model": "llama3.2:1b",
+    "market_conditions": {
+        "trend": "bullish",
+        "strength": 0.14650925866906023,
+        "volatility": 0.004130130515557039
+    }
 }

@@ -158,12 +158,13 @@ class HistoricalDataDownloader:
             raise
 
     def download_historical_data(self, company_name: str) -> bool:
-        """Download historical minute data with smart checking and incremental updates"""
+        """Download historical minute data in 30-day batches with waiting periods"""
         try:
             symbol = self.get_stock_symbol(company_name)
-            total_days = self.config.get('historical_days', 28)
-            chunk_size = self.config.get('chunk_size', 7)
-            chunk_delay = self.config.get('delay_between_chunks', 60)
+            total_days = self.config.get('historical_days', 120)  # Total days to download
+            chunk_size = self.config.get('chunk_size', 7)  # Days per chunk
+            chunk_delay = self.config.get('delay_between_chunks', 65)  # Delay between chunks
+            batch_delay = self.config.get('batch_delay', 180)  # Delay between 30-day batches
             
             # Check existing data
             has_existing, existing_data, last_date = self.check_existing_data(company_name)
@@ -172,7 +173,6 @@ class HistoricalDataDownloader:
             start_date = end_date - timedelta(days=total_days)
             
             if has_existing and last_date:
-                # Adjust start date to download only missing data
                 start_date = last_date.date() + timedelta(days=1)
                 self.logger.info(f"Downloading incremental data from {start_date} to {end_date}")
             else:
@@ -185,43 +185,70 @@ class HistoricalDataDownloader:
             ticker = yf.Ticker(symbol)
             new_data = []
             
-            # Download data in chunks
-            current_chunk_end = end_date
-            chunks_downloaded = 0
+            # Calculate number of 30-day batches needed
+            current_batch_end = end_date
+            remaining_days = (current_batch_end - start_date).days
             
-            while current_chunk_end > start_date:
-                current_chunk_start = max(current_chunk_end - timedelta(days=chunk_size), start_date)
+            while remaining_days > 0:
+                # Calculate batch dates
+                batch_start = max(current_batch_end - timedelta(days=30), start_date)
+                self.logger.info(f"\nStarting new 30-day batch: {batch_start} to {current_batch_end}")
                 
-                self.logger.info(f"Downloading chunk {chunks_downloaded + 1}: {current_chunk_start} to {current_chunk_end}")
+                # Download data in 7-day chunks within this 30-day batch
+                current_chunk_end = current_batch_end
+                batch_data = []
                 
-                current_date = current_chunk_start
-                chunk_data = []
-                
-                while current_date <= current_chunk_end:
-                    if not self.is_market_holiday(current_date):
-                        market_start, market_end = self.get_market_hours(current_date)
-                        
-                        # Download data for the day
-                        day_data = self.download_minute_data(ticker, market_start, market_end)
-                        
-                        if not day_data.empty:
-                            chunk_data.append(day_data)
-                            self.logger.info(f"Successfully downloaded data for {current_date}")
-                        else:
-                            self.logger.warning(f"No data available for {current_date}")
+                while current_chunk_end > batch_start:
+                    current_chunk_start = max(current_chunk_end - timedelta(days=chunk_size), batch_start)
                     
-                    current_date += timedelta(days=1)
-                
-                if chunk_data:
-                    new_data.extend(chunk_data)
-                    chunks_downloaded += 1
+                    self.logger.info(f"Downloading chunk: {current_chunk_start} to {current_chunk_end}")
                     
-                    # Add delay between chunks
-                    if current_chunk_start > start_date:
-                        self.logger.info(f"Waiting {chunk_delay} seconds before next chunk download...")
-                        time.sleep(chunk_delay)
+                    current_date = current_chunk_start
+                    chunk_data = []
+                    
+                    while current_date <= current_chunk_end:
+                        if not self.is_market_holiday(current_date):
+                            market_start, market_end = self.get_market_hours(current_date)
+                            
+                            # Download data for the day
+                            day_data = self.download_minute_data(ticker, market_start, market_end)
+                            
+                            if not day_data.empty:
+                                chunk_data.append(day_data)
+                                self.logger.info(f"Successfully downloaded data for {current_date}")
+                            else:
+                                self.logger.warning(f"No data available for {current_date}")
+                        
+                        current_date += timedelta(days=1)
+                    
+                    if chunk_data:
+                        batch_data.extend(chunk_data)
+                        
+                        # Add delay between chunks within the batch
+                        if current_chunk_start > batch_start:
+                            self.logger.info(f"Waiting {chunk_delay} seconds before next chunk...")
+                            time.sleep(chunk_delay)
+                    
+                    current_chunk_end = current_chunk_start - timedelta(days=1)
                 
-                current_chunk_end = current_chunk_start - timedelta(days=1)
+                # Add batch data to overall new data
+                if batch_data:
+                    new_data.extend(batch_data)
+                    
+                    # Save intermediate results after each 30-day batch
+                    if len(new_data) > 0:
+                        combined_new_data = pd.concat(new_data)
+                        self.merge_and_save_data(existing_data, combined_new_data, company_name)
+                        self.logger.info(f"Saved intermediate data after batch {batch_start} to {current_batch_end}")
+                
+                # Update for next batch
+                current_batch_end = batch_start - timedelta(days=1)
+                remaining_days = (current_batch_end - start_date).days
+                
+                # Add delay between 30-day batches if more data to download
+                if remaining_days > 0:
+                    self.logger.info(f"\nWaiting {batch_delay} seconds before starting next 30-day batch...")
+                    time.sleep(batch_delay)
             
             if not new_data:
                 if has_existing:
@@ -231,10 +258,8 @@ class HistoricalDataDownloader:
                     self.logger.error(f"No data downloaded for {symbol}")
                     return False
             
-            # Combine all new data
+            # Final merge and save
             combined_new_data = pd.concat(new_data)
-            
-            # Merge with existing data and save
             self.merge_and_save_data(existing_data, combined_new_data, company_name)
             
             return True

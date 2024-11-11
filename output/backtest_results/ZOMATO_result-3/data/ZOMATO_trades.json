@@ -1,0 +1,24 @@
+[
+    {
+        "date":"2024-10-14 12:15:00",
+        "action":"BUY",
+        "price":282.35,
+        "size":35,
+        "cost":9882.25,
+        "indicators":{
+            "SMA_15m":280.5799972534
+        },
+        "profit":null
+    },
+    {
+        "date":"2024-10-15 13:22:00",
+        "action":"SELL",
+        "price":276.7,
+        "size":35,
+        "cost":null,
+        "indicators":{
+            "SMA_15m":278.5750015259
+        },
+        "profit":-197.75
+    }
+]

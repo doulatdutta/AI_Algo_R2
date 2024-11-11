@@ -57,7 +57,7 @@ class AlgoAgent:
                 config = yaml.safe_load(file)
                 
             self.api_provider = config.get('api_provider', 'ollama')
-            self.model = config.get('ollama', {}).get('model', 'llama3.2:1b')
+            self.model = config.get('ollama', {}).get('model', 'llama3.2:1b') # Options: "algo_DD", "llama3.2", "qwen2.5:1.5b","0xroyce/plutus", "llama3.2:1b"
             return config
             
         except Exception as e:
@@ -705,9 +705,9 @@ class AlgoAgent:
                     model=self.model,
                     messages=messages,
                     options={
-                        'temperature': 0.7,
-                        'top_p': 0.9,
-                        'num_predict': 1000
+                        'temperature': 0.7, # Lower for more focused responses, higher for more creativity
+                        'top_p': 0.9, # Higher for more diverse responses, lower for more focused responses
+                        'num_predict': 1000 # Maximum number of tokens to generate
                     }
                 )
 
@@ -718,7 +718,8 @@ class AlgoAgent:
                     
                     # Check for empty or missing conditions
                     if not strategy.get('entry_conditions') or not strategy.get('exit_conditions'):
-                        error_msg = """Your response is missing entry or exit conditions. Please provide a complete JSON with:
+                        error_msg = """
+                        Your response is missing entry or exit conditions. Please provide a complete JSON with:
                         - At least 2 entry conditions
                         - At least 2 exit conditions
                         Each condition must have indicator, condition, value, and timeframe fields."""

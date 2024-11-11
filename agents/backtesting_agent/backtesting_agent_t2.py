@@ -850,200 +850,170 @@ class BacktestRunner:
             self.logger.error(f"Error running backtest: {e}")
             raise
 
-    def create_interactive_plot(self, data: pd.DataFrame, trades_df: pd.DataFrame, company_name: str):
-        """Create an interactive HTML plot using Plotly"""
-        try:
-            import plotly.graph_objects as go
-            from plotly.subplots import make_subplots
-            
-            # Load strategy config
-            algo_config = self.get_latest_algorithm(company_name)
-            
-            # Create figure with secondary y-axis
-            fig = make_subplots(rows=4, cols=1, 
-                            shared_xaxes=True,
-                            vertical_spacing=0.02,
-                            row_heights=[0.5, 0.2, 0.15, 0.15])
 
-            # Calculate required indicators based on strategy
-            data = data.copy()
-            required_indicators = set()
-            
-            # Collect required indicators from conditions
-            for condition in algo_config['entry_conditions'] + algo_config['exit_conditions']:
-                required_indicators.add(condition['indicator'])
-            
-            # Calculate all required indicators
-            if 'SMA' in required_indicators:
-                data['SMA20'] = talib.SMA(data['Close'], timeperiod=20)
-            if 'EMA' in required_indicators:
-                data['EMA50'] = talib.EMA(data['Close'], timeperiod=50)
-            if 'RSI' in required_indicators:
-                data['RSI'] = talib.RSI(data['Close'], timeperiod=14)
-            if 'MACD' in required_indicators:
-                macd, signal, hist = talib.MACD(data['Close'], fastperiod=12, slowperiod=26, signalperiod=9)
-                data['MACD'] = macd
-                data['MACD_Signal'] = signal
-                data['MACD_Hist'] = hist
-            if 'Stochastic_K' in required_indicators or 'Stochastic_D' in required_indicators:
-                k, d = talib.STOCH(data['High'], data['Low'], data['Close'])
-                data['Stochastic_K'] = k
-                data['Stochastic_D'] = d
-            if 'WILLR' in required_indicators:
-                data['WILLR'] = talib.WILLR(data['High'], data['Low'], data['Close'])
-            if any(ind in required_indicators for ind in ['BB_Upper', 'BB_Middle', 'BB_Lower']):
-                bb_upper, bb_middle, bb_lower = talib.BBANDS(data['Close'])
-                data['BB_Upper'] = bb_upper
-                data['BB_Middle'] = bb_middle
-                data['BB_Lower'] = bb_lower
-            if 'ATR' in required_indicators:
-                data['ATR'] = talib.ATR(data['High'], data['Low'], data['Close'])
-            if any(ind in required_indicators for ind in ['KC_Upper', 'KC_Lower']):
-                typical_price = (data['High'] + data['Low'] + data['Close']) / 3
-                kc_middle = talib.EMA(typical_price, timeperiod=20)
-                kc_atr = talib.ATR(data['High'], data['Low'], data['Close'])
-                data['KC_Upper'] = kc_middle + (2 * kc_atr)
-                data['KC_Lower'] = kc_middle - (2 * kc_atr)
-            if 'OBV' in required_indicators:
-                data['OBV'] = talib.OBV(data['Close'], data['Volume'])
-            if 'MFI' in required_indicators:
-                data['MFI'] = talib.MFI(data['High'], data['Low'], data['Close'], data['Volume'])
-            if 'ADX' in required_indicators:
-                data['ADX'] = talib.ADX(data['High'], data['Low'], data['Close'])
-            if 'CCI' in required_indicators:
-                data['CCI'] = talib.CCI(data['High'], data['Low'], data['Close'])
-                
-            # Add candlestick
-            fig.add_trace(go.Candlestick(x=data.index,
-                                        open=data['Open'],
-                                        high=data['High'],
-                                        low=data['Low'],
-                                        close=data['Close'],
-                                        name='OHLC'),
-                        row=1, col=1)
+    def create_interactive_plot(self, df: pd.DataFrame, trades_df: pd.DataFrame, company_name: str):
+            """Create an interactive HTML plot using Plotly"""
+            try:
+                # Create figure with secondary y-axis
+                fig = make_subplots(rows=4, cols=1, 
+                                shared_xaxes=True,
+                                vertical_spacing=0.02,
+                                row_heights=[0.5, 0.2, 0.15, 0.15])
 
-            # Add Moving averages and Bollinger Bands on main chart
-            if 'SMA' in required_indicators:
-                fig.add_trace(go.Scatter(x=data.index, y=data['SMA20'],
-                                    line=dict(color='orange', width=1),
-                                    name='SMA20'),
-                            row=1, col=1)
-            
-            if 'EMA' in required_indicators:
-                fig.add_trace(go.Scatter(x=data.index, y=data['EMA50'],
-                                    line=dict(color='blue', width=1),
-                                    name='EMA50'),
-                            row=1, col=1)
-                
-            if 'BB_Upper' in required_indicators:
-                fig.add_trace(go.Scatter(x=data.index, y=data['BB_Upper'],
-                                    line=dict(color='gray', width=1, dash='dash'),
-                                    name='BB Upper'),
-                            row=1, col=1)
-                fig.add_trace(go.Scatter(x=data.index, y=data['BB_Lower'],
-                                    line=dict(color='gray', width=1, dash='dash'),
-                                    name='BB Lower'),
+                # Add candlestick chart
+                fig.add_trace(go.Candlestick(x=df.index,
+                                            open=df['Open'],
+                                            high=df['High'],
+                                            low=df['Low'],
+                                            close=df['Close'],
+                                            name='Price'),
                             row=1, col=1)
 
-            # Add volume bars
-            colors = ['red' if row['Open'] > row['Close'] else 'green' for index, row in data.iterrows()]
-            fig.add_trace(go.Bar(x=data.index, y=data['Volume'],
-                                marker_color=colors,
-                                name='Volume'),
-                        row=2, col=1)
+                # Get unique indicators from conditions
+                indicators = set()
+                algo_config = self.get_latest_algorithm(company_name)
+                for condition in algo_config['entry_conditions'] + algo_config['exit_conditions']:
+                    indicators.add(condition['indicator'])
 
-            # Add RSI if required
-            if 'RSI' in required_indicators:
-                fig.add_trace(go.Scatter(x=data.index, y=data['RSI'],
-                                    line=dict(color='purple', width=1),
-                                    name='RSI'),
-                            row=3, col=1)
+                # Plot indicators
+                colors = ['blue', 'orange', 'green', 'red', 'purple', 'brown']
+                color_idx = 0
                 
-                fig.add_hline(y=70, line_width=1, line_dash="dash", line_color="red", row=3, col=1)
-                fig.add_hline(y=30, line_width=1, line_dash="dash", line_color="green", row=3, col=1)
+                for indicator in indicators:
+                    if indicator == 'SMA':
+                        sma = talib.SMA(df['Close'], timeperiod=20)
+                        fig.add_trace(go.Scatter(
+                            x=df.index, y=sma,
+                            name='SMA(20)',
+                            line=dict(color=colors[color_idx % len(colors)])
+                        ), row=1, col=1)
+                        color_idx += 1
+                    
+                    elif indicator == 'RSI':
+                        rsi = talib.RSI(df['Close'], timeperiod=14)
+                        fig.add_trace(go.Scatter(
+                            x=df.index, y=rsi,
+                            name='RSI(14)',
+                            line=dict(color=colors[color_idx % len(colors)])
+                        ), row=2, col=1)
+                        # Add RSI levels
+                        fig.add_hline(y=70, line_dash="dash", line_color="red", row=2)
+                        fig.add_hline(y=30, line_dash="dash", line_color="green", row=2)
+                        color_idx += 1
+                    
+                    elif indicator == 'WILLR':
+                        willr = talib.WILLR(df['High'], df['Low'], df['Close'], timeperiod=14)
+                        fig.add_trace(go.Scatter(
+                            x=df.index, y=willr,
+                            name='Williams %R(14)',
+                            line=dict(color=colors[color_idx % len(colors)])
+                        ), row=3, col=1)
+                        # Add Williams %R levels
+                        fig.add_hline(y=-20, line_dash="dash", line_color="red", row=3)
+                        fig.add_hline(y=-80, line_dash="dash", line_color="green", row=3)
+                        color_idx += 1
 
-            # Add MACD if required
-            if 'MACD' in required_indicators:
-                fig.add_trace(go.Scatter(x=data.index, y=data['MACD'],
-                                    line=dict(color='blue', width=1),
-                                    name='MACD'),
-                            row=4, col=1)
-                fig.add_trace(go.Scatter(x=data.index, y=data['MACD_Signal'],
-                                    line=dict(color='orange', width=1),
-                                    name='Signal'),
-                            row=4, col=1)
-                
-                # Add MACD histogram
-                colors = ['red' if val < 0 else 'green' for val in data['MACD_Hist']]
-                fig.add_trace(go.Bar(x=data.index, y=data['MACD_Hist'],
-                                marker_color=colors,
-                                name='MACD Histogram'),
-                            row=4, col=1)
+                    elif indicator == 'MACD':
+                        macd, signal, hist = talib.MACD(df['Close'],
+                                                    fastperiod=12,
+                                                    slowperiod=26,
+                                                    signalperiod=9)
+                        fig.add_trace(go.Scatter(
+                            x=df.index, y=macd,
+                            name='MACD',
+                            line=dict(color=colors[color_idx % len(colors)])
+                        ), row=4, col=1)
+                        fig.add_trace(go.Scatter(
+                            x=df.index, y=signal,
+                            name='Signal',
+                            line=dict(color=colors[(color_idx + 1) % len(colors)])
+                        ), row=4, col=1)
+                        # Add MACD histogram
+                        fig.add_trace(go.Bar(
+                            x=df.index, y=hist,
+                            name='MACD Histogram',
+                            marker_color=np.where(hist > 0, 'green', 'red')
+                        ), row=4, col=1)
+                        color_idx += 2
 
-            # Add trades if available
-            if not trades_df.empty:
-                # Add buy signals
-                buy_trades = trades_df[trades_df['action'] == 'BUY']
-                if not buy_trades.empty:
-                    fig.add_trace(go.Scatter(
-                        x=buy_trades['date'],
-                        y=[data.loc[date, 'Low'] * 0.99 for date in buy_trades['date']],
-                        mode='markers',
-                        marker=dict(symbol='triangle-up', size=10, color='green'),
-                        name='Buy Signal'
-                    ), row=1, col=1)
+                # Add volume bars
+                colors = ['red' if row['Open'] > row['Close'] else 'green' 
+                        for idx, row in df.iterrows()]
+                fig.add_trace(go.Bar(
+                    x=df.index,
+                    y=df['Volume'],
+                    name='Volume',
+                    marker_color=colors
+                ), row=2, col=1)
 
-                # Add sell signals
-                sell_trades = trades_df[trades_df['action'] == 'SELL']
-                if not sell_trades.empty:
-                    fig.add_trace(go.Scatter(
-                        x=sell_trades['date'],
-                        y=[data.loc[date, 'High'] * 1.01 for date in sell_trades['date']],
-                        mode='markers',
-                        marker=dict(symbol='triangle-down', size=10, color='red'),
-                        name='Sell Signal'
-                    ), row=1, col=1)
+                # Add trades if available
+                if not trades_df.empty:
+                    # Add buy signals
+                    buy_trades = trades_df[trades_df['action'] == 'BUY']
+                    if not buy_trades.empty:
+                        fig.add_trace(go.Scatter(
+                            x=buy_trades['date'],
+                            y=[df.loc[date, 'Low'] * 0.99 for date in buy_trades['date']],
+                            mode='markers',
+                            name='Buy',
+                            marker=dict(
+                                symbol='triangle-up',
+                                size=10,
+                                color='green',
+                            )
+                        ), row=1, col=1)
 
-            # Update layout
-            fig.update_layout(
-                title=f'{company_name} Trading Chart with {", ".join(required_indicators)}',
-                yaxis_title='Price',
-                yaxis2_title='Volume',
-                xaxis4_title='Date',
-                template='plotly_dark',
-                height=1000,
-                margin=dict(t=30, l=0, r=10, b=0),
-                showlegend=True,
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=1.02,
-                    xanchor="right",
-                    x=1
+                    # Add sell signals
+                    sell_trades = trades_df[trades_df['action'] == 'SELL']
+                    if not sell_trades.empty:
+                        fig.add_trace(go.Scatter(
+                            x=sell_trades['date'],
+                            y=[df.loc[date, 'High'] * 1.01 for date in sell_trades['date']],
+                            mode='markers',
+                            name='Sell',
+                            marker=dict(
+                                symbol='triangle-down',
+                                size=10,
+                                color='red',
+                            )
+                        ), row=1, col=1)
+
+                # Update layout
+                fig.update_layout(
+                    title=f'{company_name} Trading Chart',
+                    xaxis_title='Date',
+                    yaxis_title='Price',
+                    template='plotly_dark',
+                    height=1200,
+                    showlegend=True,
+                    legend=dict(
+                        yanchor="top",
+                        y=0.99,
+                        xanchor="left",
+                        x=0.01
+                    )
                 )
-            )
 
-            # Update y-axes labels based on indicators
-            fig.update_yaxes(title_text="Price", row=1, col=1)
-            fig.update_yaxes(title_text="Volume", row=2, col=1)
-            
-            # Dynamic y-axis labels based on indicators
-            if 'RSI' in required_indicators:
-                fig.update_yaxes(title_text="RSI", row=3, col=1)
-            if 'MACD' in required_indicators:
-                fig.update_yaxes(title_text="MACD", row=4, col=1)
-            elif 'Stochastic_K' in required_indicators:
-                fig.update_yaxes(title_text="Stochastic", row=4, col=1)
+                # Update axes labels
+                fig.update_yaxes(title_text="Price", row=1, col=1)
+                fig.update_yaxes(title_text="Volume", row=2, col=1)
+                
+                if 'RSI' in indicators:
+                    fig.update_yaxes(title_text="RSI", row=2, col=1)
+                if 'MACD' in indicators:
+                    fig.update_yaxes(title_text="MACD", row=4, col=1)
+                if 'WILLR' in indicators:
+                    fig.update_yaxes(title_text="Williams %R", row=3, col=1)
 
-            # Save the figure
-            plot_path = self.plots_dir / f"{company_name}_interactive_chart.html"
-            fig.write_html(str(plot_path))
-            logger.info(f"Saved interactive plot to {plot_path}")
+                # Save the figure
+                plot_path = self.plots_dir / f"{company_name}_interactive_chart.html"
+                fig.write_html(str(plot_path))
+                logger.info(f"Saved interactive plot to {plot_path}")
 
-        except Exception as e:
-            logger.error(f"Error creating interactive plot: {e}")
-            raise
-    
+            except Exception as e:
+                logger.error(f"Error creating interactive plot: {e}")
+                raise
+
     
     def get_next_result_number(self, company_name: str) -> int:
         """Get the next available result number"""

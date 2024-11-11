@@ -1,0 +1,30 @@
+Backtest Summary Report - ZOMATO
+==================================================
+Generated on: 2024-11-12 00:47:43
+
+Performance Summary
+------------------------------
+Total Return: 0.00%
+Sharpe Ratio: nan
+Max Drawdown: -0.00%
+Win Rate: nan%
+Total Trades: 0
+
+Trade Statistics
+------------------------------
+Average Trade: nan%
+Best Trade: nan%
+Worst Trade: nan%
+Profit Factor: nan
+
+Results Directory Structure
+------------------------------
+Main Directory: D:\buisness\AI\AI_Algo_R2\output\backtest_results\ZOMATO_result-2
+├── plots/
+│   └── ZOMATO_backtest.html
+├── data/
+│   └── ZOMATO_trades.csv
+├── stats/
+│   ├── ZOMATO_stats.json
+│   └── ZOMATO_parameters.json
+└── ZOMATO_summary.txt

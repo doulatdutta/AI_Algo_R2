@@ -1,0 +1,21 @@
+{
+    "entry_conditions": {
+        "rsi_threshold": 30,
+        "macd_condition": "crossover",
+        "trend_condition": "price > SMA20"
+    },
+    "exit_conditions": {
+        "rsi_threshold": 70,
+        "macd_condition": "crossunder",
+        "trend_condition": "price < EMA50"
+    },
+    "position_sizing": "fixed_100_shares",
+    "commission_rate": 0.002,
+    "performance_summary": {
+        "total_return": -0.9442499839172379,
+        "sharpe_ratio": 0.0,
+        "max_drawdown": -1.4321118141869094,
+        "win_rate": 19.35483870967742,
+        "total_trades": 31
+    }
+}

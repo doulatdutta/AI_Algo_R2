@@ -221,7 +221,7 @@ AI_Algo_R2
 ```bash
     python -m agents.algo_agent.algo_agent
 ```
-
+python -m agents.algo_agent.algo_agent_t
 
 8. **test run for data_downloaded**
 
@@ -234,6 +234,9 @@ AI_Algo_R2
 ```bash
     python -m agents.backtesting_agent.backtesting_agent
 ```
+
+
+python -m agents.backtesting_agent.backtesting_agent_t2
 
 10. **test run for checker_agent**
 

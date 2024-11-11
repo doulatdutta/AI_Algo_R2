@@ -1,8 +1,22 @@
 {
-    "initial_capital": 100000,
+    "initial_capital": 100000.0,
     "commission": 0.002,
-    "entry_conditions": [],
-    "exit_conditions": [],
+    "entry_conditions": [
+        {
+            "indicator": "SMA",
+            "condition": "crossover",
+            "value": 280.5,
+            "timeframe": "15m"
+        }
+    ],
+    "exit_conditions": [
+        {
+            "indicator": "SMA",
+            "condition": "below",
+            "value": 260.0,
+            "timeframe": "15m"
+        }
+    ],
     "trading_hours": {
         "start": "09:15",
         "end": "15:20"
@@ -12,8 +26,13 @@
         "stop_loss": 0.02,
         "take_profit": 0.03
     },
-    "generated_at": "2024-11-06T23:53:56.133600",
+    "generated_at": "2024-11-11T22:08:25.671893",
     "company": "ZOMATO",
     "api_provider": "ollama",
-    "model": "qwen2.5:1.5b"
+    "model": "llama3.2:1b",
+    "market_conditions": {
+        "trend": "bullish",
+        "strength": 0.14650925866906023,
+        "volatility": 0.004130130515557039
+    }
 }

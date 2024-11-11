@@ -254,7 +254,7 @@ class AlgoAgent:
             print(f"API Provider: {self.api_provider}")
             
             # Set up API configurations
-            self.model = config.get('ollama', {}).get('model', 'qwen2.5:1.5b')
+            self.model = config.get('ollama', {}).get('model','qwen2.5:1.5b') # Options: "algo_DD", "llama3.2", "qwen2.5:1.5b","0xroyce/plutus"
             print(f"Using model: {self.model}")
             return config
             
@@ -623,155 +623,333 @@ class AlgoAgent:
         drawdowns = df['Close'] / rolling_max - 1.0
         return abs(drawdowns.min())
 
+
     def generate_strategy_json(self) -> Dict:
         """Generate enhanced trading strategy using AI analysis."""
         try:
             # Analyze historical data
             analysis_results = self.analyze_historical_data()
             
-            # Convert analysis results to native Python types
-            def convert_to_native_types(obj):
-                if isinstance(obj, dict):
-                    return {key: convert_to_native_types(value) for key, value in obj.items()}
-                elif isinstance(obj, list):
-                    return [convert_to_native_types(item) for item in obj]
-                elif isinstance(obj, (np.integer, np.int32, np.int64)):
-                    return int(obj)
-                elif isinstance(obj, (np.floating, np.float32, np.float64)):
-                    return float(obj)
-                elif isinstance(obj, np.bool_):
-                    return bool(obj)
-                elif isinstance(obj, pd.Timestamp):
-                    return str(obj)
-                elif pd.isna(obj):
-                    return None
-                return obj
-                
-            analysis_results = convert_to_native_types(analysis_results)
-            
             # Generate AI prompts
-            system_prompt = """You are an expert algorithmic trader. Generate a comprehensive trading 
-            strategy based on detailed technical analysis. Include specific entry/exit conditions, 
-            position sizing, and risk management rules. Output valid JSON only."""
-
-            user_prompt = f"""Create an advanced trading strategy for {self.company_name} based on:
-            {json.dumps(analysis_results, indent=2)}
-
-            Include:
-            1. Market condition-based entry/exit rules
-            2. Pattern recognition signals
-            3. Risk-adjusted position sizing
-            4. Dynamic stop-loss and take-profit levels
-            5. Multiple timeframe analysis
-            6. Volume-based confirmations
+            system_prompt = """You are an expert algorithmic trader for the Indian stock market. Analyze market data to determine optimal trading parameters.
             
-            The strategy must include:
-            - initial_capital (default 100000)
-            - commission (default 0.002)
-            - trading_hours (example:- start: "09:15", end: "15:20")
-            - entry_conditions (array)
-            - exit_conditions (array)
-            - risk_management settings
+            Return a JSON with this exact structure:
+            {
+                "indicators": [
+                    {"type": "RSI/MACD/EMA", "name": "unique_name", "params": {"length": value}}
+                ],
+                "entry_conditions": [
+                    {"indicator1": "unique_name", "indicator2": "value/signal", "condition": "crossover/crossunder", "action": "buy/sell", "size": 0.95}
+                ],
+                "exit_conditions": [
+                    {"indicator1": "unique_name", "indicator2": "value/signal", "condition": "crossover/crossunder", "action": "exit"}
+                ],
+                "initial_capital": 100000,
+                "commission": 0.002,
+                "trading_hours": {
+                    "start": "HH:MM",  // Choose optimal start time between 09:15-15:20
+                    "end": "HH:MM"     // Choose optimal end time between start time-15:20
+                },
+                "risk_management": {
+                    "max_position_size": value,  // Based on volatility (0.1-1.0)
+                    "stop_loss": value,         // Based on ATR and volatility
+                    "take_profit": value        // Based on support/resistance levels
+                }
+            }"""
+
+            user_prompt = f"""Based on this analysis of {self.company_name}, create a strategy:
             
-            Format as JSON with clear, specific rules."""
+            Market Conditions:
+            - Trend: {analysis_results['market_condition']['trend']}
+            - Trend Strength: {analysis_results['market_condition']['strength']:.2f}
+            - Volatility: {analysis_results['market_condition']['volatility']:.2f}
+            - Support Levels: {analysis_results['market_condition']['support_levels']}
+            - Resistance Levels: {analysis_results['market_condition']['resistance_levels']}
+            - Risk Metrics:
+            * Value at Risk (95%): {analysis_results['risk_metrics']['var_95']:.4f}
+            * Max Drawdown: {analysis_results['risk_metrics']['max_drawdown']:.4f}
+            * Sharpe Ratio: {analysis_results['risk_metrics']['sharpe_ratio']:.2f}
+
+            Requirements:
+            1. Analyze volatility patterns to determine optimal trading hours
+            2. Set position size based on volatility ({analysis_results['market_condition']['volatility']:.4f}):
+            - Higher volatility = smaller position size
+            - Lower volatility = larger position size
+            - Range: 0.1 to 1.0
+            3. Calculate stop loss based on:
+            - Volatility: {analysis_results['market_condition']['volatility']:.4f}
+            - Value at Risk: {analysis_results['risk_metrics']['var_95']:.4f}
+            - Support/Resistance levels
+            4. Set take profit based on:
+            - Recent price swings
+            - Support/Resistance levels
+            - Risk:Reward ratio (minimum 1:2)
+            5. Optimize for maximum profitability and minimum risk
+            6. Strategy should be suitable for intraday trading
+
+            Return ONLY the JSON object with exact structure requested."""
 
             # Generate strategy using AI
             response = self.generate_chat_completion(system_prompt, user_prompt)
             strategy_json = json.loads(self.clean_json_response(response))
             
-            # Ensure default values exist
-            default_strategy = self.get_default_strategy()
-            strategy_json = {**default_strategy, **strategy_json}
+            # Clean redundant fields
+            fields_to_remove = ['trades', 'trading_rules', 'entryConditions', 'exitConditions', 'symbols', 'timeframes']
+            for field in fields_to_remove:
+                strategy_json.pop(field, None)
             
-            # Validate and enhance strategy
-            strategy_json = self.validate_and_enhance_strategy(strategy_json, analysis_results)
+            # Validate trading hours
+            strategy_json['trading_hours'] = self.validate_trading_hours(strategy_json.get('trading_hours', {}))
             
-            return convert_to_native_types(strategy_json)
+            # Validate risk management parameters
+            risk_management = strategy_json.get('risk_management', {})
+            strategy_json['risk_management'] = {
+                'max_position_size': min(max(float(risk_management.get('max_position_size', 0.5)), 0.1), 1.0),
+                'stop_loss': min(max(float(risk_management.get('stop_loss', 0.02)), 0.01), 0.1),
+                'take_profit': min(max(float(risk_management.get('take_profit', 0.03)), 0.02), 0.2)
+            }
+
+            # Add other required fields if missing (but keep risk management from Ollama)
+            required_fields = {
+                "indicators": [
+                    {"type": "RSI", "name": "rsi", "params": {"length": 14}},
+                    {"type": "MACD", "name": "macd", "params": {"fast": 12, "slow": 26, "signal": 9}}
+                ],
+                "entry_conditions": [
+                    {"indicator1": "rsi", "indicator2": "30", "condition": "crossover", "action": "buy", "size": 0.95},
+                    {"indicator1": "macd", "indicator2": "signal", "condition": "crossover", "action": "buy", "size": 0.95}
+                ],
+                "exit_conditions": [
+                    {"indicator1": "rsi", "indicator2": "70", "condition": "crossover", "action": "exit"},
+                    {"indicator1": "macd", "indicator2": "signal", "condition": "crossunder", "action": "exit"}
+                ],
+                "initial_capital": 100000,
+                "commission": 0.002
+            }
+
+            # Ensure all required fields exist (except risk_management)
+            for field, default_value in required_fields.items():
+                if field not in strategy_json:
+                    strategy_json[field] = default_value
+                
+            return strategy_json
 
         except Exception as e:
             logger.error(f"Error generating strategy JSON: {e}")
             return self.get_default_strategy()
 
-    def validate_and_enhance_strategy(self, strategy: Dict, analysis: Dict) -> Dict:
-        """Validate and enhance the generated strategy based on analysis results."""
+    def validate_trading_hours(self, trading_hours: Dict) -> Dict:
+        """Validate and correct trading hours."""
         try:
-            # Ensure basic structure
-            base_strategy = {
-                "initial_capital": 100000,
-                "commission": 0.002,
-                "trading_hours": {
-                    "start": "09:15",
-                    "end": "15:20"
-                },
-                "entry_conditions": [],
-                "exit_conditions": [],
-                "risk_management": {
-                    "max_position_size": 0.1,
-                    "stop_loss": 0.02,
-                    "take_profit": 0.03
-                }
-            }
+            start_time = datetime.strptime(trading_hours.get('start', '09:15'), '%H:%M')
+            end_time = datetime.strptime(trading_hours.get('end', '15:20'), '%H:%M')
+            market_open = datetime.strptime('09:15', '%H:%M')
+            market_close = datetime.strptime('15:20', '%H:%M')
             
-            # Merge with provided strategy
-            for key, value in strategy.items():
-                if key == 'trading_hours' and not isinstance(value, dict):
-                    continue  # Skip invalid trading_hours format
-                base_strategy[key] = value
-
-            # Add risk management rules based on volatility
-            base_strategy['risk_management'] = {
-                'max_position_size': float(min(0.1, 1.0 / analysis['risk_metrics']['volatility'])),
-                'stop_loss': float(analysis['risk_metrics']['var_95'] * 2),
-                'take_profit': float(analysis['risk_metrics']['var_95'] * 3)
-            }
+            # Ensure times are within market hours
+            if start_time < market_open:
+                start_time = market_open
+            if end_time > market_close:
+                end_time = market_close
+            if start_time > end_time:
+                start_time = market_open
+                end_time = market_close
             
-            # Adjust entry conditions based on market condition
-            if analysis['market_condition']['trend'] == 'bullish':
-                base_strategy['entry_conditions'].extend(self.get_bullish_conditions())
-            elif analysis['market_condition']['trend'] == 'bearish':
-                base_strategy['entry_conditions'].extend(self.get_bearish_conditions())
+            return {
+                "start": start_time.strftime('%H:%M'),
+                "end": end_time.strftime('%H:%M')
+            }
+        except ValueError:
+            return {"start": "09:15", "end": "15:20"}
+
+    # def generate_strategy_json(self) -> Dict:
+    #     """Generate enhanced trading strategy using AI analysis."""
+    #     try:
+    #         # Analyze historical data
+    #         analysis_results = self.analyze_historical_data()
             
-            return base_strategy
+    #         # Generate AI prompts
+    #         system_prompt = """You are an expert algorithmic trader. Generate a profitable trading strategy for the Indian stock market.
+    #         Your response must be a valid JSON object with the following EXACT structure:
+    #         {
+    #             "indicators": [
+    #                 {"type": "SMA/RSI/MACD/etc", "name": "indicator_name", "params": {"length": value, ...}},
+    #                 ...
+    #             ],
+    #             "entry_conditions": [
+    #                 {"indicator1": "indicator_name", "indicator2": "indicator_name", "condition": "crossover/crossunder", "action": "buy/sell", "size": 0.95},
+    #                 ...
+    #             ],
+    #             "exit_conditions": [
+    #                 {"indicator1": "indicator_name", "indicator2": "indicator_name", "condition": "crossover/crossunder", "action": "exit"},
+    #                 ...
+    #             ],
+    #             "trading_hours": {"start": "09:15", "end": "15:20"},
+    #             "initial_capital": 100000,
+    #             "commission": 0.002,
+    #             "risk_management": {
+    #                 "max_position_size": 0.1,
+    #                 "stop_loss": <calculated_value>,
+    #                 "take_profit": <calculated_value>
+    #             }
+    #         }"""
 
-        except Exception as e:
-            logger.error(f"Error in strategy validation: {e}")
-            return self.get_default_strategy()
+    #         user_prompt = f"""Based on the following market analysis for {self.company_name}, create a specific trading strategy:
 
-    def get_bullish_conditions(self) -> List[Dict]:
-        """Get additional conditions for bullish market."""
-        return [
-            {
-                "type": "momentum",
-                "indicator": "RSI",
-                "condition": "crossover",
-                "value": 40,
-                "action": "buy"
-            },
-            {
-                "type": "trend",
-                "indicator": "MACD",
-                "condition": "positive_crossover",
-                "action": "buy"
-            }
-        ]
+    # Market Analysis:
+    # - Trend: {analysis_results['market_condition']['trend']}
+    # - Strength: {analysis_results['market_condition']['strength']:.2f}
+    # - Volatility: {analysis_results['market_condition']['volatility']:.2f}
+    # - Support Levels: {analysis_results['market_condition']['support_levels']}
+    # - Resistance Levels: {analysis_results['market_condition']['resistance_levels']}
+    # - RSI: {analysis_results['technical_analysis']['trend'].get('rsi', 0)}
+    # - MACD Status: {analysis_results['technical_analysis']['trend'].get('macd', 0)}
 
-    def get_bearish_conditions(self) -> List[Dict]:
-        """Get additional conditions for bearish market."""
-        return [
-            {
-                "type": "momentum",
-                "indicator": "RSI",
-                "condition": "crossunder",
-                "value": 60,
-                "action": "sell"
-            },
-            {
-                "type": "trend",
-                "indicator": "MACD",
-                "condition": "negative_crossover",
-                "action": "sell"
-            }
-        ]
+    # Required Indicators Examples:
+    # 1. RSI with length 14 for momentum
+    # 2. MACD(12,26,9) for trend
+    # 3. SMA/EMA combinations for crossovers
+
+    # Entry Conditions Examples:
+    # 1. RSI crosses above 30 for oversold bounces
+    # 2. MACD crosses above signal line for trend confirmation
+    # 3. Price crosses above SMA for trend following
+
+    # Exit Conditions Examples:
+    # 1. RSI crosses above 70 for overbought exits
+    # 2. MACD crosses below signal line for trend reversal
+    # 3. Price crosses below EMA for trend exit
+
+    # You must include at least 2 entry conditions and 2 exit conditions.
+    # Risk management should be adjusted based on the volatility ({analysis_results['market_condition']['volatility']:.4f}).
+
+    # Response must be valid JSON that matches the structure provided in the system prompt."""
+
+    #         # Generate strategy using AI
+    #         response = self.generate_chat_completion(system_prompt, user_prompt)
+    #         strategy_json = json.loads(self.clean_json_response(response))
+            
+    #         # Ensure we have minimum required fields
+    #         if not strategy_json.get('entry_conditions') or not strategy_json.get('exit_conditions'):
+    #             logger.warning("Missing required conditions in generated strategy, using backup")
+    #             backup_strategy = {
+    #                 "indicators": [
+    #                     {"type": "RSI", "name": "rsi", "params": {"length": 14}},
+    #                     {"type": "MACD", "name": "macd", "params": {"fast": 12, "slow": 26, "signal": 9}}
+    #                 ],
+    #                 "entry_conditions": [
+    #                     {"indicator1": "rsi", "indicator2": "30", "condition": "crossover", "action": "buy", "size": 0.95},
+    #                     {"indicator1": "macd", "indicator2": "signal", "condition": "crossover", "action": "buy", "size": 0.95}
+    #                 ],
+    #                 "exit_conditions": [
+    #                     {"indicator1": "rsi", "indicator2": "70", "condition": "crossover", "action": "exit"},
+    #                     {"indicator1": "macd", "indicator2": "signal", "condition": "crossunder", "action": "exit"}
+    #                 ],
+    #                 "initial_capital": 100000,
+    #                 "commission": 0.002,
+    #                 "trading_hours": {
+    #                     "start": "09:15",
+    #                     "end": "15:20"
+    #                 },
+    #                 "risk_management": {
+    #                     "max_position_size": 0.1,
+    #                     "stop_loss": 0.02,
+    #                     "take_profit": 0.03
+    #                 }
+    #             }
+    #             strategy_json.update(backup_strategy)
+    #             strategy_json.pop('entryConditions', None)
+    #             strategy_json.pop('exitConditions', None)
+            
+    #         return strategy_json
+
+    #     except Exception as e:
+    #         logger.error(f"Error generating strategy JSON: {e}")
+    #         return self.get_default_strategy()
+
+
+    # def validate_and_enhance_strategy(self, strategy: Dict, analysis: Dict) -> Dict:
+    #     """Validate and enhance the generated strategy based on analysis results."""
+    #     try:
+    #         # Ensure basic structure
+    #         base_strategy = {
+    #             "initial_capital": 100000,
+    #             "commission": 0.002,
+    #             "trading_hours": {
+    #                 "start": "09:15",
+    #                 "end": "15:20"
+    #             },
+    #             "entry_conditions": [],
+    #             "exit_conditions": [],
+    #             "risk_management": {
+    #                 "max_position_size": 0.1,
+    #                 "stop_loss": 0.02,
+    #                 "take_profit": 0.03
+    #             }
+    #         }
+            
+    #         # Merge with provided strategy
+    #         for key, value in strategy.items():
+    #             if key == 'trading_hours' and not isinstance(value, dict):
+    #                 continue  # Skip invalid trading_hours format
+    #             base_strategy[key] = value
+
+    #         # Add risk management rules based on volatility
+    #         base_strategy['risk_management'] = {
+    #             'max_position_size': float(min(0.1, 1.0 / analysis['risk_metrics']['volatility'])),
+    #             'stop_loss': float(analysis['risk_metrics']['var_95'] * 2),
+    #             'take_profit': float(analysis['risk_metrics']['var_95'] * 3)
+    #         }
+            
+    #         # Adjust entry conditions based on market condition
+    #         if analysis['market_condition']['trend'] == 'bullish':
+    #             base_strategy['entry_conditions'].extend(self.get_bullish_conditions())
+    #         elif analysis['market_condition']['trend'] == 'bearish':
+    #             base_strategy['entry_conditions'].extend(self.get_bearish_conditions())
+            
+    #         return base_strategy
+
+    #     except Exception as e:
+    #         logger.error(f"Error in strategy validation: {e}")
+    #         return self.get_default_strategy()
+
+    # def get_bullish_conditions(self) -> List[Dict]:
+    #     """Get additional conditions for bullish market."""
+    #     return [
+    #         {
+    #             "type": "momentum",
+    #             "indicator": "RSI",
+    #             "condition": "crossover",
+    #             "value": 40,
+    #             "action": "buy"
+    #         },
+    #         {
+    #             "type": "trend",
+    #             "indicator": "MACD",
+    #             "condition": "positive_crossover",
+    #             "action": "buy"
+    #         }
+    #     ]
+
+    # def get_bearish_conditions(self) -> List[Dict]:
+    #     """Get additional conditions for bearish market."""
+    #     return [
+    #         {
+    #             "type": "momentum",
+    #             "indicator": "RSI",
+    #             "condition": "crossunder",
+    #             "value": 60,
+    #             "action": "sell"
+    #         },
+    #         {
+    #             "type": "trend",
+    #             "indicator": "MACD",
+    #             "condition": "negative_crossover",
+    #             "action": "sell"
+    #         }
+    #     ]
+
+
 
     def generate_algorithms(self) -> None:
         """Generate enhanced trading algorithm with AI optimization."""

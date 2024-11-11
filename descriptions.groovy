@@ -51,10 +51,7 @@ Step-5:-The 'Backtesting_agent' will backtest the algoritham(inside output\algo\
 
         Algorithm -
         Buy Conditions:
-        - **; - rsi(14) < 30; - sma(20) > sma(50); - macd(12, 26) > macd(12, 26)_lag1; - stochastic oscillator(14, 3, 3) < 20
 
-        Sell Conditions:
-        - **; - rsi(14) > 70; - sma(20) < sma(50); - macd(12, 26) < macd(12, 26)_lag1; - williams %r(9) > -80
 
         Daily Results:
             2024-10-25 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
@@ -62,20 +59,7 @@ Step-5:-The 'Backtesting_agent' will backtest the algoritham(inside output\algo\
             2024-10-23 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
             2024-10-22 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
             2024-10-21 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
-            2024-10-18 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
-            2024-10-17 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
-            2024-10-16 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
-            2024-10-15 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
-            2024-10-14 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
-            2024-10-11 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
-            2024-10-10 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
-            2024-10-09 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
-            2024-10-08 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
-            2024-10-07 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
-            2024-10-04 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
-            2024-10-03 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
-            2024-10-01 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
-            2024-09-30 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
+
             2024-09-27 Profit: 0.00% ; total trade: 0 ; buy_trade - 0 ; sell_trade - 0
 
         Overall Statistics:
@@ -346,4 +330,72 @@ it will take leatest algo_num (aslike if there is two file companyname_algoritha
 "Max. Drawdown [%]:" from output/backtest_result/{company_name}_algoritham-{algo_num}_result.txt
 
 
-    
+
+
+
+my algo_agent will make algoritham as like following. (this will be saved in output/algo/{company_name}_algoritham-{algo_num}.txt)
+{
+            "initial_capital": 100000,
+            "commission": 0.002,
+            "entry_conditions": [
+                {
+                    "indicator": "RSI",
+                    "condition": "below",
+                    "value": 30,
+                    "timeframe": "5m"
+                },
+                {
+                    "indicator": "MACD",
+                    "condition": "crossover",
+                    "value": 20,
+                    "timeframe": "5m"
+                }
+            ],
+            "exit_conditions": [
+                {
+                    "indicator": "RSI",
+                    "condition": "above",
+                    "value": 70,
+                    "timeframe": "5m"
+                },
+                {
+                    "indicator": "MACD",
+                    "condition": "crossunder",
+                    "value": 40,
+                    "timeframe": "5m"
+                }
+            ],
+            "trading_hours": {
+                "start": "09:15",
+                "end": "15:20"
+            },
+            "risk_management": {
+                "max_position_size": 0.1,
+                "stop_loss": 0.02,
+                "take_profit": 0.03
+            }
+        }
+
+where         
+        valid_indicators = {
+            "SMA", "EMA", "WMA", "VWAP",
+            "RSI", "MACD", "Stochastic_K", "Stochastic_D", "WILLR",
+            "BB_Upper", "BB_Lower", "BB_Middle", "ATR", "KC_Upper", "KC_Lower",
+            "OBV", "MFI",
+            "ADX", "CCI"
+        }
+
+        valid_conditions = {"above", "below", "crossover", "crossunder"}
+        valid_timeframes = {"1m", "5m", "15m", "30m", "1h"}
+
+now i want my backtesting_agent will backtest those algoritham on historical data. and save result . 
+historical data is saved in agents/backtesting_agent/historical_data/{company_name}.csv
+
+i want that what ever indicator is in my algoritham, my backtesting_agent should calculate the indicator value for every tick and then if the buy condition match buy or if the sell condition match it sell.
+
+i want to use vectorbt libreary.
+
+i want to save result in output/backtest_result/{company_name}_algoritham-{algo_num}_result.txt file. where algo_num is the latest algo_num (aslike if there is two file companyname_algoritham-1.txt and  companyname_algoritham-2.txt it will take data from companyname_algoritham-2.txt)
+
+
+
