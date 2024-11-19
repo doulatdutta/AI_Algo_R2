@@ -4,7 +4,7 @@
 api_provider: "ollama"  # Options: "openai", "ollama", "groq"
 
 # Ollama Configuration
-ollama:  # Changed from 'Ollama' to 'ollama' for consistency
+ollama:  
   model: "llama3.2:1b"  # Options: "algo_DD", "llama3.2", "qwen2.5:1.5b","0xroyce/plutus", "llama3.2:1b"
 
 # OpenAI Configuration
@@ -46,4 +46,7 @@ delay_between_attempts: 90
 delay_between_chunks: 65
 batch_delay: 180  # New parameter for delay between 30-day batches
 
+
+#alphavintage API
+ FN7Y6Q4HARDWJOKJ
 
